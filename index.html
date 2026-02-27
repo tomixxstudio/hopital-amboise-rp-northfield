@@ -812,34 +812,79 @@ select{-webkit-appearance:none;appearance:none;background-image:url("data:image/
 <div class="toast" id="toast"></div>
 
 <script>
-// ===== DATA =====
-let db = {
-  patients: [
-    {id:'P-00001',nom:'Dupont',prenom:'Marc',ddn:'1975-03-22',nss:'1 75 03 75 123 456 78',email:'marc.dupont@email.fr',tel:'06 12 34 56 78',adresse:'14 rue des Lilas, Amboise',medecin_traitant:'M-001',mdp:'dupont2025'},
-    {id:'P-00002',nom:'Martin',prenom:'Sophie',ddn:'1988-07-15',nss:'2 88 07 75 234 567 89',email:'sophie.martin@email.fr',tel:'07 23 45 67 89',adresse:'3 allée des Roses, Amboise',medecin_traitant:'M-002',mdp:'martin2025'},
-  ],
-  medecins: [
-    {id:'M-001',nom:'Dubois',prenom:'Jean',spec:'Médecine générale',email:'j.dubois@ch-amboise.fr',tel:'02 47 30 10 01',mdp:'dubois2025'},
-    {id:'M-002',nom:'Martin',prenom:'Claire',spec:'Cardiologie',email:'c.martin@ch-amboise.fr',tel:'02 47 30 10 02',mdp:'martin2025med'},
-    {id:'M-003',nom:'Leroy',prenom:'Pierre',spec:'Dermatologie',email:'p.leroy@ch-amboise.fr',tel:'02 47 30 10 03',mdp:'leroy2025'},
-  ],
-  consultations: [
-    {id:'C001',patientId:'P-00001',date:'2025-11-12',medecinId:'M-002',spec:'Cardiologie',notes:'Bilan cardiaque annuel. ECG normal. Pas d\'anomalie détectée. Renouvellement ordonnance statines.',montant:150,pctSS:70,statut:'Terminée'},
-    {id:'C002',patientId:'P-00001',date:'2025-08-03',medecinId:'M-001',spec:'Médecine générale',notes:'Consultation de routine. Tension 130/80. Légère fatigue. Bilan sanguin prescrit.',montant:55,pctSS:70,statut:'Terminée'},
-    {id:'C003',patientId:'P-00002',date:'2025-12-01',medecinId:'M-003',spec:'Dermatologie',notes:'Eczéma chronique. Prescription corticoïdes topiques.',montant:120,pctSS:70,statut:'Terminée'},
-  ],
-  factures: [
-    {id:'F-2025-001',patientId:'P-00001',date:'2025-11-12',prestation:'Consultation Cardiologie',montant:150,pctSS:70,statut:'Payée',rembEtape:3},
-    {id:'F-2025-002',patientId:'P-00001',date:'2025-08-03',prestation:'Consultation Médecine générale',montant:55,pctSS:70,statut:'En attente',rembEtape:1},
-    {id:'F-2025-003',patientId:'P-00002',date:'2025-12-01',prestation:'Consultation Dermatologie',montant:120,pctSS:70,statut:'Payée',rembEtape:2},
-  ],
-  rdv: [
-    {id:'RDV001',patientId:'P-00001',medecinId:'M-002',date:'2026-03-12',heure:'10h30',motif:'Suivi cardiologique',statut:'Confirmé'},
-    {id:'RDV002',patientId:'P-00002',medecinId:'M-003',date:'2026-04-05',heure:'14h00',motif:'Bilan dermatologique',statut:'En attente'},
-  ],
-  modifRequests: [],
-  samuAlerts: [],
+// ===== SUPABASE CONFIG =====
+const SB_URL = 'https://xuvygzpcnlmfqoouayts.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1dnlnenBjbmxtZnFvb3VheXRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxOTQ3ODAsImV4cCI6MjA4Nzc3MDc4MH0.eIFjO3cJJfAmyjhpLNgRgkXuN1waUXmzFSdZ19Mvi1M';
+
+const sbFetch = async (path, opts={}) => {
+  const res = await fetch(SB_URL+'/rest/v1/'+path, {
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation',...(opts.headers||{})},
+    ...opts
+  });
+  if(!res.ok){ const e=await res.text(); throw new Error(e); }
+  const txt=await res.text();
+  return txt?JSON.parse(txt):[];
 };
+const sbGet    = (table,qs='')     => sbFetch(table+'?'+qs);
+const sbPost   = (table,body)      => sbFetch(table, {method:'POST', body:JSON.stringify(body)});
+const sbPatch  = (table,qs,body)   => sbFetch(table+'?'+qs, {method:'PATCH', body:JSON.stringify(body)});
+const sbDelete = (table,qs)        => sbFetch(table+'?'+qs, {method:'DELETE'});
+
+// ===== IN-MEMORY CACHE (alimenté depuis Supabase) =====
+let db = {
+  patients:[],medecins:[],consultations:[],factures:[],rdv:[],modifRequests:[],samuAlerts:[]
+};
+
+// Helper: map colonnes Supabase → noms JS internes
+const mapPt  = r => ({id:r.id,nom:r.nom,prenom:r.prenom,ddn:r.ddn,nss:r.nss,email:r.email,tel:r.tel,adresse:r.adresse,medecin_traitant:r.medecin_traitant,mdp:r.mdp});
+const mapMed = r => ({id:r.id,nom:r.nom,prenom:r.prenom,spec:r.spec,email:r.email,tel:r.tel,mdp:r.mdp});
+const mapC   = r => ({id:r.id,patientId:r.patient_id,medecinId:r.medecin_id,date:r.date,spec:r.spec,notes:r.notes||'',montant:parseFloat(r.montant)||0,pctSS:r.pct_ss||70,statut:r.statut});
+const mapF   = r => ({id:r.id,patientId:r.patient_id,date:r.date,prestation:r.prestation,montant:parseFloat(r.montant)||0,pctSS:r.pct_ss||70,statut:r.statut,rembEtape:r.remb_etape||1});
+const mapRdv = r => ({id:r.id,patientId:r.patient_id,medecinId:r.medecin_id,date:r.date,heure:r.heure,motif:r.motif||'',statut:r.statut});
+const mapMR  = r => ({id:r.id,patientId:r.patient_id,champ:r.champ,newVal:r.new_val,just:r.just||'',statut:r.statut,date:r.date});
+const mapSA  = r => ({id:r.id,patientId:r.patient_id,timestamp:new Date(r.triggered_at),type:r.type,desc:r.description||'',lieu:r.lieu,ville:r.ville||'',patient:r.patient_nom?{nom:r.patient_nom,id:r.patient_id||'',tel:r.patient_tel||'—',nss:r.patient_nss||'—'}:null,statut:r.statut,note:r.note||''});
+
+// Chargement initial de toutes les données
+async function loadDB(){
+  try {
+    const [pts,meds,cons,facts,rdvs,mreqs,salerts] = await Promise.all([
+      sbGet('patients','order=id'),
+      sbGet('medecins','order=id'),
+      sbGet('consultations','order=date.desc'),
+      sbGet('factures','order=date.desc'),
+      sbGet('rdv','order=date.desc'),
+      sbGet('modif_requests','order=created_at.desc'),
+      sbGet('samu_alerts','order=triggered_at.desc'),
+    ]);
+    db.patients      = pts.map(mapPt);
+    db.medecins      = meds.map(mapMed);
+    db.consultations = cons.map(mapC);
+    db.factures      = facts.map(mapF);
+    db.rdv           = rdvs.map(mapRdv);
+    db.modifRequests = mreqs.map(mapMR);
+    db.samuAlerts    = salerts.map(mapSA);
+    syncCounters();
+    updateSamuNotif();
+  } catch(e){ console.error('Supabase loadDB error',e); showToast('Erreur de connexion à la base de données','err'); }
+}
+
+// Abonnement temps réel SAMU (Realtime)
+function startRealtimeSamu(){
+  const evtSrc = new EventSource(
+    SB_URL+'/realtime/v1/api?apikey='+SB_KEY+'&log_level=info',
+    {headers:{Authorization:'Bearer '+SB_KEY}}
+  );
+  // Polling simple toutes les 8s comme fallback fiable
+  setInterval(async()=>{
+    try{
+      const rows = await sbGet('samu_alerts','order=triggered_at.desc');
+      db.samuAlerts = rows.map(mapSA);
+      updateSamuNotif();
+      const samuPage = document.getElementById('ap-samu');
+      if(samuPage&&samuPage.classList.contains('active')) renderSamuAlerts();
+    }catch(e){}
+  }, 8000);
+}
 
 // Étapes remboursement SS
 const REMB_ETAPES = [
@@ -849,7 +894,13 @@ const REMB_ETAPES = [
 ];
 
 let currentUser=null,currentUserType=null,selectedSlot=null;
-let ptCounter=2,medCounter=3,fabOpen=false;
+let ptCounter=0,medCounter=0,fabOpen=false;
+
+// Recalcule les compteurs depuis les IDs existants en BDD
+function syncCounters(){
+  db.patients.forEach(p=>{const n=parseInt(p.id.replace('P-',''));if(n>ptCounter)ptCounter=n;});
+  db.medecins.forEach(m=>{const n=parseInt(m.id.replace('M-',''));if(n>medCounter)medCounter=n;});
+}
 
 // ===== SCREENS =====
 function showScreen(id){
@@ -860,29 +911,46 @@ function showScreen(id){
 }
 
 // ===== AUTH =====
-function doLogin(){
+async function doLogin(){
   const id=document.getElementById('li-user').value.trim();
   const pw=document.getElementById('li-pass').value;
-  const pt=db.patients.find(p=>p.id===id&&p.mdp===pw);
-  if(!pt){document.getElementById('li-err').style.display='block';return;}
-  document.getElementById('li-err').style.display='none';
-  currentUser=pt;currentUserType='patient';
-  loadPatientApp();showScreen('scr-app');
+  const btn=document.querySelector('#scr-login .btn-prim');
+  btn.textContent='Connexion...';btn.disabled=true;
+  try{
+    await loadDB();
+    const pt=db.patients.find(p=>p.id===id&&p.mdp===pw);
+    if(!pt){document.getElementById('li-err').style.display='block';btn.textContent='Connexion à mon espace';btn.disabled=false;return;}
+    document.getElementById('li-err').style.display='none';
+    currentUser=pt;currentUserType='patient';
+    loadPatientApp();showScreen('scr-app');
+  }catch(e){showToast('Erreur de connexion','err');}
+  btn.textContent='Connexion à mon espace';btn.disabled=false;
 }
-function doAdminLogin(){
+
+async function doAdminLogin(){
   if(document.getElementById('adm-pass').value==='hospitalisation'){
     document.getElementById('adm-err').style.display='none';
+    showToast('Chargement des données...','');
+    await loadDB();
     loadAdminPanel();showScreen('scr-admin');
+    startRealtimeSamu();
   } else {document.getElementById('adm-err').style.display='block';}
 }
-function doMedLogin(){
+
+async function doMedLogin(){
   const id=document.getElementById('med-user').value.trim();
   const pw=document.getElementById('med-pass').value;
-  const med=db.medecins.find(m=>m.id===id&&m.mdp===pw);
-  if(!med){document.getElementById('med-err').style.display='block';return;}
-  document.getElementById('med-err').style.display='none';
-  currentUser=med;currentUserType='medecin';
-  loadMedecinApp();showScreen('scr-medecin');
+  const btn=document.querySelector('#scr-med-login .btn-prim');
+  btn.textContent='Connexion...';btn.disabled=true;
+  try{
+    await loadDB();
+    const med=db.medecins.find(m=>m.id===id&&m.mdp===pw);
+    if(!med){document.getElementById('med-err').style.display='block';btn.textContent='Connexion';btn.disabled=false;return;}
+    document.getElementById('med-err').style.display='none';
+    currentUser=med;currentUserType='medecin';
+    loadMedecinApp();showScreen('scr-medecin');
+  }catch(e){showToast('Erreur de connexion','err');}
+  btn.textContent='Connexion';btn.disabled=false;
 }
 function logout(){currentUser=null;currentUserType=null;showScreen('scr-login');}
 
@@ -1007,17 +1075,20 @@ function loadModifPending(){
   }
 }
 
-function demandeModif(){
+async function demandeModif(){
   const champ=document.getElementById('modif-champ').value;
   const newVal=document.getElementById('modif-val').value.trim();
   const just=document.getElementById('modif-just').value.trim();
   if(!newVal){showToast('Veuillez saisir une nouvelle valeur','err');return;}
-  db.modifRequests.push({id:'MR'+Date.now(),patientId:currentUser.id,champ,newVal,just,statut:'En attente',date:new Date().toISOString().split('T')[0]});
-  document.getElementById('modif-val').value='';
-  document.getElementById('modif-just').value='';
-  showToast('Demande envoyée, en attente de validation','ok');
-  loadModifPending();
-  updateAdminNotifs();
+  try{
+    const row={id:'MR'+Date.now(),patient_id:currentUser.id,champ,new_val:newVal,just,statut:'En attente',date:new Date().toISOString().split('T')[0]};
+    await sbPost('modif_requests',row);
+    db.modifRequests.unshift(mapMR(row));
+    document.getElementById('modif-val').value='';
+    document.getElementById('modif-just').value='';
+    showToast('Demande envoyée, en attente de validation','ok');
+    loadModifPending();updateAdminNotifs();
+  }catch(e){showToast('Erreur lors de l\'envoi','err');}
 }
 
 function loadRdvMedecins(){
@@ -1062,17 +1133,21 @@ function showSlots(){
   });
 }
 
-function confirmRdv(){
+async function confirmRdv(){
   const date=document.getElementById('rdv-date').value;
   const medId=document.getElementById('rdv-med').value;
   const motif=document.getElementById('rdv-motif-txt').value||'Non précisé';
   if(!date||!selectedSlot||!medId){showToast('Veuillez compléter tous les champs','err');return;}
-  db.rdv.push({id:'RDV'+Date.now(),patientId:currentUser.id,medecinId:medId,date,heure:selectedSlot,motif,statut:'En attente'});
-  showToast('Demande de RDV envoyée — en attente de confirmation','ok');
-  document.getElementById('slots-card').style.display='none';
-  document.getElementById('rdv-date').value='';
-  document.getElementById('rdv-motif-txt').value='';
-  loadPatientApp();updateAdminNotifs();
+  try{
+    const row={id:'RDV'+Date.now(),patient_id:currentUser.id,medecin_id:medId,date,heure:selectedSlot,motif,statut:'En attente'};
+    await sbPost('rdv',row);
+    db.rdv.unshift(mapRdv(row));
+    showToast('Demande de RDV envoyée — en attente de confirmation','ok');
+    document.getElementById('slots-card').style.display='none';
+    document.getElementById('rdv-date').value='';
+    document.getElementById('rdv-motif-txt').value='';
+    loadPatientApp();updateAdminNotifs();
+  }catch(e){showToast('Erreur lors de la demande','err');}
 }
 
 function showConsultDetail(cid){
@@ -1161,13 +1236,13 @@ function loadMedecinApp(){
   });
 }
 
-function medConfirmRdv(id){
-  const r=db.rdv.find(x=>x.id===id);
-  if(r){r.statut='Confirmé';showToast('RDV confirmé','ok');loadMedecinApp();}
+async function medConfirmRdv(id){
+  try{await sbPatch('rdv','id=eq.'+id,{statut:'Confirmé'});const r=db.rdv.find(x=>x.id===id);if(r)r.statut='Confirmé';showToast('RDV confirmé','ok');loadMedecinApp();}
+  catch(e){showToast('Erreur','err');}
 }
-function medAnnulerRdv(id){
-  const r=db.rdv.find(x=>x.id===id);
-  if(r){r.statut='Annulé';showToast('RDV annulé','');loadMedecinApp();}
+async function medAnnulerRdv(id){
+  try{await sbPatch('rdv','id=eq.'+id,{statut:'Annulé'});const r=db.rdv.find(x=>x.id===id);if(r)r.statut='Annulé';showToast('RDV annulé','');loadMedecinApp();}
+  catch(e){showToast('Erreur','err');}
 }
 
 function showMedPage(pgId,btn){
@@ -1229,6 +1304,7 @@ function loadAdminPanel(){
   updateAdminNotifs();
 
   // Patient ID préview
+  syncCounters();
   document.getElementById('np-id').value='P-'+String(ptCounter+1).padStart(5,'0');
   document.getElementById('nm-id').value='M-'+String(medCounter+1).padStart(3,'0');
 }
@@ -1348,72 +1424,73 @@ function updateAdminNotifs(){
   if(modifDot)modifDot.style.display=pendingModif?'inline-block':'none';
 }
 
-function admConfirmerRdv(id){
-  const r=db.rdv.find(x=>x.id===id);
-  if(r){r.statut='Confirmé';showToast('RDV confirmé','ok');refreshAdmRdv();updateAdminNotifs();loadAdminPanel();}
+async function admConfirmerRdv(id){
+  try{await sbPatch('rdv','id=eq.'+id,{statut:'Confirmé'});const r=db.rdv.find(x=>x.id===id);if(r)r.statut='Confirmé';showToast('RDV confirmé','ok');refreshAdmRdv();updateAdminNotifs();loadAdminPanel();}catch(e){showToast('Erreur','err');}
 }
-function admAnnulerRdv(id){
-  const r=db.rdv.find(x=>x.id===id);
-  if(r){r.statut='Annulé';showToast('RDV annulé','');refreshAdmRdv();updateAdminNotifs();loadAdminPanel();}
+async function admAnnulerRdv(id){
+  try{await sbPatch('rdv','id=eq.'+id,{statut:'Annulé'});const r=db.rdv.find(x=>x.id===id);if(r)r.statut='Annulé';showToast('RDV annulé','');refreshAdmRdv();updateAdminNotifs();loadAdminPanel();}catch(e){showToast('Erreur','err');}
 }
-function openDecal(id){
-  document.getElementById('decal-rdv-id').value=id;
-  openM('m-decal');
-}
-function confirmDecal(){
+function openDecal(id){document.getElementById('decal-rdv-id').value=id;openM('m-decal');}
+async function confirmDecal(){
   const id=document.getElementById('decal-rdv-id').value;
   const date=document.getElementById('decal-date').value;
   const heure=document.getElementById('decal-heure').value;
   if(!date){showToast('Veuillez choisir une date','err');return;}
-  const r=db.rdv.find(x=>x.id===id);
-  if(r){r.date=date;r.heure=heure;r.statut='Décalé';showToast('RDV décalé au '+formatDate(date),'ok');}
+  try{await sbPatch('rdv','id=eq.'+id,{date,heure,statut:'Décalé'});const r=db.rdv.find(x=>x.id===id);if(r){r.date=date;r.heure=heure;r.statut='Décalé';}showToast('RDV décalé au '+formatDate(date),'ok');}catch(e){showToast('Erreur','err');}
   closeM('m-decal');refreshAdmRdv();
 }
 
-function admMarkPaid(id){
-  const f=db.factures.find(x=>x.id===id);
-  if(f){f.statut='Payée';showToast('Facture payée','ok');refreshAdmFact();loadAdminPanel();}
+async function admMarkPaid(id){
+  try{await sbPatch('factures','id=eq.'+id,{statut:'Payée'});const f=db.factures.find(x=>x.id===id);if(f)f.statut='Payée';showToast('Facture payée','ok');refreshAdmFact();loadAdminPanel();}catch(e){showToast('Erreur','err');}
 }
 
-function updateRembStep(fid,step){
-  const f=db.factures.find(x=>x.id===fid);
-  if(f){f.rembEtape=parseInt(step);showToast('Étape de remboursement mise à jour','ok');refreshAdmRemb();}
+async function updateRembStep(fid,step){
+  try{await sbPatch('factures','id=eq.'+fid,{remb_etape:parseInt(step)});const f=db.factures.find(x=>x.id===fid);if(f)f.rembEtape=parseInt(step);showToast('Étape de remboursement mise à jour','ok');refreshAdmRemb();}catch(e){showToast('Erreur','err');}
 }
 
-function validerModif(rid){
-  const r=db.modifRequests.find(x=>x.id===rid);
-  if(!r)return;
+async function validerModif(rid){
+  const r=db.modifRequests.find(x=>x.id===rid);if(!r)return;
   const pt=db.patients.find(p=>p.id===r.patientId);
-  if(pt&&pt.hasOwnProperty(r.champ)){pt[r.champ]=r.newVal;}
-  r.statut='Validée';
-  showToast('Modification validée et appliquée','ok');
-  refreshAdmModifs();updateAdminNotifs();
+  try{
+    await sbPatch('modif_requests','id=eq.'+rid,{statut:'Validée'});
+    r.statut='Validée';
+    if(pt&&pt.hasOwnProperty(r.champ)){
+      pt[r.champ]=r.newVal;
+      const col={email:'email',tel:'tel',adresse:'adresse',medecin_traitant:'medecin_traitant'}[r.champ];
+      if(col)await sbPatch('patients','id=eq.'+pt.id,{[col]:r.newVal});
+    }
+    showToast('Modification validée et appliquée','ok');
+    refreshAdmModifs();updateAdminNotifs();
+  }catch(e){showToast('Erreur','err');}
 }
-function refuserModif(rid){
-  const r=db.modifRequests.find(x=>x.id===rid);
-  if(r){r.statut='Refusée';showToast('Modification refusée','');refreshAdmModifs();updateAdminNotifs();}
+async function refuserModif(rid){
+  try{await sbPatch('modif_requests','id=eq.'+rid,{statut:'Refusée'});const r=db.modifRequests.find(x=>x.id===rid);if(r)r.statut='Refusée';showToast('Modification refusée','');refreshAdmModifs();updateAdminNotifs();}catch(e){showToast('Erreur','err');}
 }
 
-function createPatient(){
+async function createPatient(){
   const nom=document.getElementById('np-nom').value.trim();
   const prenom=document.getElementById('np-prenom').value.trim();
-  const ddn=document.getElementById('np-ddn').value;
+  const ddn=document.getElementById('np-ddn').value||null;
   const nss=document.getElementById('np-nss').value.trim();
   const email=document.getElementById('np-email').value.trim();
   const tel=document.getElementById('np-tel').value.trim();
   const mdp=document.getElementById('np-mdp').value.trim();
   const adresse=document.getElementById('np-adr').value.trim();
-  const medTrait=document.getElementById('np-med-trait').value;
+  const medecin_traitant=document.getElementById('np-med-trait').value||null;
   if(!nom||!prenom||!mdp){showToast('Nom, prénom et mot de passe requis','err');return;}
   ptCounter++;
   const id='P-'+String(ptCounter).padStart(5,'0');
-  db.patients.push({id,nom,prenom,ddn,nss,email,tel,adresse,medecin_traitant:medTrait,mdp});
-  showToast('Compte patient créé : '+id,'ok');
-  loadAdminPanel();
-  ['np-nom','np-prenom','np-ddn','np-nss','np-email','np-tel','np-mdp','np-adr'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  try{
+    const row={id,nom,prenom,ddn,nss,email,tel,adresse,medecin_traitant,mdp};
+    await sbPost('patients',row);
+    db.patients.push(mapPt(row));
+    showToast('Compte patient créé : '+id,'ok');
+    loadAdminPanel();
+    ['np-nom','np-prenom','np-ddn','np-nss','np-email','np-tel','np-mdp','np-adr'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  }catch(e){showToast('Erreur : '+e.message,'err');}
 }
 
-function createMedecin(){
+async function createMedecin(){
   const nom=document.getElementById('nm-nom').value.trim();
   const prenom=document.getElementById('nm-prenom').value.trim();
   const spec=document.getElementById('nm-spec').value.trim();
@@ -1423,55 +1500,73 @@ function createMedecin(){
   if(!nom||!spec||!mdp){showToast('Nom, spécialité et mot de passe requis','err');return;}
   medCounter++;
   const id='M-'+String(medCounter).padStart(3,'0');
-  db.medecins.push({id,nom,prenom,spec,email,tel,mdp});
-  showToast('Médecin créé : '+id+' ('+prenom+' '+nom+')','ok');
-  loadAdminPanel();
-  ['nm-nom','nm-prenom','nm-spec','nm-email','nm-tel','nm-mdp'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  try{
+    const row={id,nom,prenom,spec,email,tel,mdp};
+    await sbPost('medecins',row);
+    db.medecins.push(mapMed(row));
+    showToast('Médecin créé : '+id+' ('+prenom+' '+nom+')','ok');
+    loadAdminPanel();
+    ['nm-nom','nm-prenom','nm-spec','nm-email','nm-tel','nm-mdp'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  }catch(e){showToast('Erreur : '+e.message,'err');}
 }
 
-function createRdvAdmin(){
-  const patientId=document.getElementById('rdv-pt-sel').value;
-  const medecinId=document.getElementById('rdv-med-sel').value;
+async function createRdvAdmin(){
+  const patient_id=document.getElementById('rdv-pt-sel').value;
+  const medecin_id=document.getElementById('rdv-med-sel').value;
   const date=document.getElementById('rdv-date-adm').value;
   const heure=document.getElementById('rdv-heure-adm').value;
   const motif=document.getElementById('rdv-motif-adm').value.trim()||'Consultation';
-  if(!patientId||!medecinId||!date){showToast('Veuillez compléter tous les champs','err');return;}
-  db.rdv.push({id:'RDV'+Date.now(),patientId,medecinId,date,heure,motif,statut:'Confirmé'});
-  showToast('RDV créé et confirmé','ok');refreshAdmRdv();loadAdminPanel();
-  document.getElementById('rdv-date-adm').value='';
-  document.getElementById('rdv-motif-adm').value='';
+  if(!patient_id||!medecin_id||!date){showToast('Veuillez compléter tous les champs','err');return;}
+  try{
+    const row={id:'RDV'+Date.now(),patient_id,medecin_id,date,heure,motif,statut:'Confirmé'};
+    await sbPost('rdv',row);
+    db.rdv.unshift(mapRdv(row));
+    showToast('RDV créé et confirmé','ok');refreshAdmRdv();loadAdminPanel();
+    document.getElementById('rdv-date-adm').value='';
+    document.getElementById('rdv-motif-adm').value='';
+  }catch(e){showToast('Erreur : '+e.message,'err');}
 }
 
-function addConsultation(){
-  const patientId=document.getElementById('c-pt').value;
+async function addConsultation(){
+  const patient_id=document.getElementById('c-pt').value;
   const date=document.getElementById('c-date').value;
-  const medecinId=document.getElementById('c-med').value;
+  const medecin_id=document.getElementById('c-med').value;
   const spec=document.getElementById('c-spec').value.trim();
   const notes=document.getElementById('c-notes').value.trim()||'—';
   const montant=parseFloat(document.getElementById('c-mnt').value)||0;
-  const pctSS=parseInt(document.getElementById('c-pct').value)||70;
-  if(!patientId||!date||!medecinId){showToast('Veuillez compléter tous les champs','err');return;}
-  const id='C'+String(db.consultations.length+1).padStart(3,'0');
+  const pct_ss=parseInt(document.getElementById('c-pct').value)||70;
+  if(!patient_id||!date||!medecin_id){showToast('Veuillez compléter tous les champs','err');return;}
+  const cid='C'+String(db.consultations.length+1).padStart(3,'0');
   const factId='F-'+new Date().getFullYear()+'-'+String(db.factures.length+1).padStart(3,'0');
-  db.consultations.push({id,patientId,date,medecinId,spec,notes,montant,pctSS,statut:'Terminée'});
-  db.factures.push({id:factId,patientId,date,prestation:'Consultation '+spec,montant,pctSS,statut:'En attente',rembEtape:1});
-  showToast('Consultation et facture enregistrées','ok');
-  refreshAdmConsult();refreshAdmFact();loadAdminPanel();
-  ['c-date','c-notes','c-mnt','c-pct'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  try{
+    const crow={id:cid,patient_id,medecin_id,date,spec,notes,montant,pct_ss,statut:'Terminée'};
+    const frow={id:factId,patient_id,date,prestation:'Consultation '+spec,montant,pct_ss,statut:'En attente',remb_etape:1};
+    await sbPost('consultations',crow);
+    await sbPost('factures',frow);
+    db.consultations.unshift(mapC(crow));
+    db.factures.unshift(mapF(frow));
+    showToast('Consultation et facture enregistrées','ok');
+    refreshAdmConsult();refreshAdmFact();loadAdminPanel();
+    ['c-date','c-notes','c-mnt','c-pct'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  }catch(e){showToast('Erreur : '+e.message,'err');}
 }
 
-function createFacture(){
-  const patientId=document.getElementById('f-pt').value;
+async function createFacture(){
+  const patient_id=document.getElementById('f-pt').value;
   const date=document.getElementById('f-date').value;
-  const prest=document.getElementById('f-prest').value.trim();
+  const prestation=document.getElementById('f-prest').value.trim();
   const montant=parseFloat(document.getElementById('f-mnt').value)||0;
-  const pctSS=parseInt(document.getElementById('f-pct').value)||70;
+  const pct_ss=parseInt(document.getElementById('f-pct').value)||70;
   const statut=document.getElementById('f-stat').value;
-  if(!patientId||!date||!prest){showToast('Veuillez compléter tous les champs','err');return;}
+  if(!patient_id||!date||!prestation){showToast('Veuillez compléter tous les champs','err');return;}
   const factId='F-'+new Date().getFullYear()+'-'+String(db.factures.length+1).padStart(3,'0');
-  db.factures.push({id:factId,patientId,date,prestation:prest,montant,pctSS,statut,rembEtape:1});
-  showToast('Facture créée : '+factId,'ok');refreshAdmFact();loadAdminPanel();
-  ['f-date','f-prest','f-mnt','f-pct'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  try{
+    const row={id:factId,patient_id,date,prestation,montant,pct_ss,statut,remb_etape:1};
+    await sbPost('factures',row);
+    db.factures.unshift(mapF(row));
+    showToast('Facture créée : '+factId,'ok');refreshAdmFact();loadAdminPanel();
+    ['f-date','f-prest','f-mnt','f-pct'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+  }catch(e){showToast('Erreur : '+e.message,'err');}
 }
 
 function showAdmPage(pgId,btn){
@@ -1524,21 +1619,23 @@ function goUrgStep2(){
 
 async function confirmUrgence(){
   const btn=document.getElementById('btn-urg-confirm');
-  btn.disabled=true;btn.textContent='Envoi en cours...';
+  btn.disabled=true; btn.textContent='Envoi en cours...';
 
-  const type=document.getElementById('urg-type').value;
-  const desc=document.getElementById('urg-desc').value.trim();
-  const lieu=document.getElementById('urg-lieu').value.trim();
-  const ville=document.getElementById('urg-ville').value.trim();
-  const now=new Date();
-  const dateStr=now.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
-  const heureStr=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const type  = document.getElementById('urg-type').value;
+  const desc  = document.getElementById('urg-desc').value.trim();
+  const lieu  = document.getElementById('urg-lieu').value.trim();
+  const ville = document.getElementById('urg-ville').value.trim();
+  const now   = new Date();
+  const dateStr  = now.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  const heureStr = now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
-  let ptInfo='**Non identifié (anonyme)**';
-  if(currentUser&&currentUserType==='patient'){
-    ptInfo=`**${currentUser.prenom} ${currentUser.nom}**\nID : ${currentUser.id}\nN° SS : ${currentUser.nss||'—'}\nTél : ${currentUser.tel||'—'}`;
+  // Infos patient pour Discord
+  let ptInfoDiscord = '**Non identifié (anonyme)**';
+  if(currentUser && currentUserType==='patient'){
+    ptInfoDiscord = `**${currentUser.prenom} ${currentUser.nom}**\nID : ${currentUser.id}\nN° SS : ${currentUser.nss||'—'}\nTél : ${currentUser.tel||'—'}`;
   }
 
+  // 1. Notification Discord
   const payload={
     username:"🚨 SAMU — Centre Hospitalier de Amboise",
     embeds:[{
@@ -1549,7 +1646,7 @@ async function confirmUrgence(){
         {name:"🚨 Situation",value:type,inline:false},
         {name:"📝 Détails",value:desc||'Non précisé',inline:false},
         {name:"📍 Lieu de l'appel",value:lieu+(ville?' — '+ville:''),inline:false},
-        {name:"👤 Patient",value:ptInfo,inline:false},
+        {name:"👤 Patient",value:ptInfoDiscord,inline:false},
         {name:"📅 Date & Heure",value:`${dateStr} à ${heureStr}`,inline:false},
         {name:"🏥 Établissement",value:"Centre Hospitalier de Amboise",inline:false},
         {name:"⚡ Action requise",value:"Contacter immédiatement le patient et envoyer les secours.",inline:false}
@@ -1558,35 +1655,31 @@ async function confirmUrgence(){
       timestamp:now.toISOString()
     }]
   };
+  try{ await fetch('https://discord.com/api/webhooks/1476916616682799156/nExtncw13t_u99p2hG_oN6ASnn7s2j0ga7kXhIobjtc_m1V-PpwgGRgBTXhi6v5_pn7P',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); }catch(e){}
 
-  try{
-    await fetch('https://discord.com/api/webhooks/1476916616682799156/nExtncw13t_u99p2hG_oN6ASnn7s2j0ga7kXhIobjtc_m1V-PpwgGRgBTXhi6v5_pn7P',{
-      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
-    });
-  }catch(e){}
-
-  // Save alert locally for admin panel
-  const alertObj = {
+  // 2. Sauvegarde dans Supabase
+  const row = {
     id: 'ALT'+Date.now(),
-    timestamp: now,
+    patient_id:    currentUser&&currentUserType==='patient' ? currentUser.id : null,
     type,
-    desc: desc||'',
+    description:   desc||'',
     lieu,
-    ville: ville||'',
-    patient: currentUser&&currentUserType==='patient' ? {
-      nom: currentUser.prenom+' '+currentUser.nom,
-      id: currentUser.id,
-      nss: currentUser.nss||'—',
-      tel: currentUser.tel||'—',
-    } : null,
-    statut: 'En cours',
-    note: '',
+    ville:         ville||'',
+    patient_nom:   currentUser&&currentUserType==='patient' ? currentUser.prenom+' '+currentUser.nom : '',
+    patient_tel:   currentUser&&currentUserType==='patient' ? currentUser.tel||'' : '',
+    patient_nss:   currentUser&&currentUserType==='patient' ? currentUser.nss||'' : '',
+    statut:        'En cours',
+    note:          '',
+    triggered_at:  now.toISOString(),
   };
-  db.samuAlerts.unshift(alertObj);
-  updateSamuNotif();
+  try{
+    await sbPost('samu_alerts', row);
+    db.samuAlerts.unshift(mapSA(row));
+    updateSamuNotif();
+  }catch(e){ console.error('Erreur sauvegarde alerte SAMU',e); }
 
-  btn.disabled=false;btn.textContent='🚨 Déclencher l\'alerte SAMU';
-  closeM('m-urg2');openM('m-urg-sent');
+  btn.disabled=false; btn.textContent='🚨 Déclencher l\'alerte SAMU';
+  closeM('m-urg2'); openM('m-urg-sent');
 }
 
 // ===== SAMU ALERTS =====
@@ -1670,9 +1763,14 @@ function filterSamu(f){
   renderSamuAlerts();
 }
 
-function resolveAlert(id){
-  const a=db.samuAlerts.find(x=>x.id===id);
-  if(a){a.statut='Résolue';renderSamuAlerts();updateSamuNotif();showToast('Alerte marquée comme résolue','ok');}
+async function resolveAlert(id){
+  try{
+    await sbPatch('samu_alerts','id=eq.'+id,{statut:'Résolue'});
+    const a=db.samuAlerts.find(x=>x.id===id);
+    if(a) a.statut='Résolue';
+    renderSamuAlerts(); updateSamuNotif();
+    showToast('Alerte marquée comme résolue','ok');
+  }catch(e){showToast('Erreur','err');}
 }
 
 function toggleNoteZone(id){
@@ -1680,15 +1778,25 @@ function toggleNoteZone(id){
   if(z)z.classList.toggle('open');
 }
 
-function saveNote(id){
+async function saveNote(id){
   const a=db.samuAlerts.find(x=>x.id===id);
   const inp=document.getElementById('note-inp-'+id);
-  if(a&&inp){a.note=inp.value.trim();renderSamuAlerts();showToast('Note enregistrée','ok');}
+  if(!a||!inp) return;
+  const note=inp.value.trim();
+  try{
+    await sbPatch('samu_alerts','id=eq.'+id,{note});
+    a.note=note;
+    renderSamuAlerts(); showToast('Note enregistrée','ok');
+  }catch(e){showToast('Erreur','err');}
 }
 
-function clearResolvedAlerts(){
-  db.samuAlerts=db.samuAlerts.filter(a=>a.statut!=='Résolue');
-  renderSamuAlerts();updateSamuNotif();showToast('Alertes résolues supprimées','');
+async function clearResolvedAlerts(){
+  try{
+    await sbDelete('samu_alerts','statut=eq.Résolue');
+    db.samuAlerts=db.samuAlerts.filter(a=>a.statut!=='Résolue');
+    renderSamuAlerts(); updateSamuNotif();
+    showToast('Alertes résolues supprimées','');
+  }catch(e){showToast('Erreur','err');}
 }
 
 // ===== MODALS =====
@@ -1715,6 +1823,17 @@ function showToast(msg,type=''){
 document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('adm-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin();});
 document.getElementById('med-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doMedLogin();});
+
+// Test connexion Supabase au démarrage
+(async()=>{
+  try{
+    await sbGet('medecins','select=id&limit=1');
+    console.log('✅ Supabase connecté — Centre Hospitalier de Amboise');
+  }catch(e){
+    showToast('⚠️ Impossible de joindre la base de données','err');
+    console.error('Supabase init error',e);
+  }
+})();
 </script>
 </body>
 </html>
