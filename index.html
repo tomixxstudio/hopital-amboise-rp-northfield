@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centre Hospitalier de Amboise — Espace Patient</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0f2240;--navy2:#1a3560;--teal:#00a896;--teal2:#00c9b1;--gold:#f4b942;--cream:#f8f5f0;--white:#fff;--gray:#6b7280;--grayL:#f1f5f9;--red:#e53e3e;--green:#38a169;--sh:0 4px 24px rgba(15,34,64,.12);--shL:0 16px 48px rgba(15,34,64,.18)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--navy);min-height:100vh}
+.screen{display:none;min-height:100vh}
+.screen.active{display:flex;flex-direction:column}
+
+/* LOGIN */
+#scr-login{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 50%,#1e4080 100%);align-items:center;justify-content:center;position:relative;overflow:hidden}
+#scr-login::before{content:'';position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(0,168,150,.15) 0%,transparent 70%);top:-100px;right:-100px}
+#scr-login::after{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(244,185,66,.1) 0%,transparent 70%);bottom:-80px;left:-80px}
+.login-card{background:rgba(255,255,255,.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:52px 48px;width:100%;max-width:460px;position:relative;z-index:1;animation:fadeUp .6s ease}
+.login-logo{text-align:center;margin-bottom:36px}
+.login-logo .cross{display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;background:var(--teal);border-radius:16px;margin-bottom:16px}
+.login-logo h1{font-family:'Playfair Display',serif;font-size:22px;color:white;font-weight:700}
+.login-logo p{color:rgba(255,255,255,.5);font-size:13px;margin-top:4px}
+.fgrp{margin-bottom:18px}
+.fgrp label{display:block;color:rgba(255,255,255,.65);font-size:12px;font-weight:500;margin-bottom:7px;letter-spacing:.5px;text-transform:uppercase}
+.fgrp input{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:14px 18px;color:white;font-size:15px;font-family:'DM Sans',sans-serif;transition:all .2s;outline:none}
+.fgrp input::placeholder{color:rgba(255,255,255,.3)}
+.fgrp input:focus{border-color:var(--teal);background:rgba(0,168,150,.1);box-shadow:0 0 0 3px rgba(0,168,150,.15)}
+.btn-prim{width:100%;background:var(--teal);color:white;border:none;border-radius:12px;padding:16px;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s}
+.btn-prim:hover{background:var(--teal2);transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,168,150,.35)}
+.lerr{background:rgba(229,62,62,.2);border:1px solid rgba(229,62,62,.4);border-radius:10px;padding:12px 16px;color:#fc8181;font-size:13px;margin-top:16px;display:none}
+
+/* TOPBAR */
+.topbar{background:var(--white);border-bottom:1px solid rgba(15,34,64,.08);padding:0 32px;height:68px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(15,34,64,.06)}
+.tb-logo{display:flex;align-items:center;gap:12px}
+.tb-logo .ico{width:38px;height:38px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.tb-logo h2{font-family:'Playfair Display',serif;font-size:18px;color:var(--navy);font-weight:700}
+.tb-right{display:flex;align-items:center;gap:12px}
+.ubadge{display:flex;align-items:center;gap:10px;background:var(--grayL);border-radius:50px;padding:6px 16px 6px 6px}
+.uavt{width:32px;height:32px;background:linear-gradient(135deg,var(--navy),var(--teal));border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:600}
+.uname{font-size:14px;font-weight:500;color:var(--navy)}
+.btn-logout{background:none;border:1px solid rgba(15,34,64,.15);border-radius:8px;padding:8px 16px;font-size:13px;color:var(--gray);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+.btn-logout:hover{background:var(--navy);color:white;border-color:var(--navy)}
+
+/* APP LAYOUT */
+#scr-app{background:var(--cream)}
+.app-layout{display:flex;flex:1}
+.sidebar{width:240px;min-height:calc(100vh - 68px);background:var(--white);border-right:1px solid rgba(15,34,64,.08);padding:24px 16px;flex-shrink:0}
+.nav-sec{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray);font-weight:600;padding:0 12px;margin:20px 0 8px}
+.nav-sec:first-child{margin-top:0}
+.nitem{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;color:var(--gray);transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif}
+.nitem:hover{background:var(--grayL);color:var(--navy)}
+.nitem.active{background:rgba(0,168,150,.1);color:var(--teal)}
+.nico{font-size:17px;width:20px;text-align:center}
+.content{flex:1;padding:36px;max-width:980px}
+.page{display:none;animation:fadeIn .3s ease}
+.page.active{display:block}
+.ph{margin-bottom:28px}
+.ph h1{font-family:'Playfair Display',serif;font-size:28px;color:var(--navy);font-weight:700}
+.ph p{color:var(--gray);margin-top:6px;font-size:14px}
+
+/* CARDS */
+.card{background:var(--white);border-radius:16px;padding:24px;box-shadow:var(--sh);margin-bottom:20px}
+.ctitle{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--navy);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(15,34,64,.08)}
+
+/* STATS */
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:22px}
+.scard{background:var(--white);border-radius:14px;padding:20px;box-shadow:var(--sh);border-left:4px solid var(--teal)}
+.scard.gold{border-left-color:var(--gold)}
+.scard.navy{border-left-color:var(--navy)}
+.slbl{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;font-weight:500}
+.sval{font-size:26px;font-weight:700;color:var(--navy);margin:6px 0 2px;font-family:'Playfair Display',serif}
+.ssub{font-size:12px;color:var(--gray)}
+
+/* BADGE */
+.badge{display:inline-block;padding:4px 10px;border-radius:50px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.bg-green{background:rgba(56,161,105,.12);color:var(--green)}
+.bg-gold{background:rgba(244,185,66,.15);color:#b7850f}
+.bg-navy{background:rgba(15,34,64,.1);color:var(--navy)}
+.bg-red{background:rgba(229,62,62,.12);color:var(--red)}
+.bg-teal{background:rgba(0,168,150,.12);color:var(--teal)}
+.bg-gray{background:rgba(107,114,128,.12);color:var(--gray)}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+thead th{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gray);font-weight:600;padding:10px 14px;text-align:left;background:var(--grayL)}
+thead th:first-child{border-radius:8px 0 0 8px}
+thead th:last-child{border-radius:0 8px 8px 0}
+tbody tr{border-bottom:1px solid rgba(15,34,64,.06);transition:background .15s}
+tbody tr:hover{background:rgba(0,168,150,.03)}
+tbody td{padding:13px 14px;font-size:14px;color:var(--navy)}
+
+/* PROGRESS */
+.prog-wrap{margin:10px 0}
+.prog-lbl{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px}
+.prog-bar{height:10px;background:var(--grayL);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--teal2));transition:width 1s ease}
+
+/* FORM */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.ff{display:flex;flex-direction:column;gap:6px}
+.ff label{font-size:13px;font-weight:500;color:var(--navy)}
+.ff input,.ff select,.ff textarea{border:1px solid rgba(15,34,64,.15);border-radius:10px;padding:11px 14px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--navy);background:var(--white);outline:none;transition:all .2s}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,168,150,.12)}
+.ff textarea{resize:vertical;min-height:80px}
+.btn-act{background:var(--navy);color:white;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s}
+.btn-act:hover{background:var(--navy2);transform:translateY(-1px);box-shadow:0 6px 16px rgba(15,34,64,.25)}
+.btn-teal{background:var(--teal);color:white;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;margin-left:10px}
+.btn-teal:hover{background:var(--teal2);transform:translateY(-1px)}
+.btn-sm{padding:6px 14px;font-size:12px;border-radius:8px;border:1px solid rgba(15,34,64,.15);background:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;color:var(--navy);transition:all .15s}
+.btn-sm:hover{background:var(--navy);color:white;border-color:var(--navy)}
+.btn-sm-red{padding:6px 12px;font-size:11px;border-radius:7px;border:1px solid rgba(229,62,62,.25);background:rgba(229,62,62,.06);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;color:var(--red);transition:all .15s}
+.btn-sm-red:hover{background:var(--red);color:white}
+.btn-sm-green{padding:6px 12px;font-size:11px;border-radius:7px;border:1px solid rgba(56,161,105,.25);background:rgba(56,161,105,.06);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;color:var(--green);transition:all .15s}
+.btn-sm-green:hover{background:var(--green);color:white}
+
+/* SLOTS */
+.slots-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.slot{border:1px solid rgba(15,34,64,.15);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all .2s;font-size:13px;font-weight:500}
+.slot:hover:not(.taken){border-color:var(--teal);background:rgba(0,168,150,.08);color:var(--teal)}
+.slot.selected{border-color:var(--teal);background:var(--teal);color:white}
+.slot.taken{background:var(--grayL);color:var(--gray);cursor:not-allowed;text-decoration:line-through}
+
+/* TIMELINE */
+.timeline{position:relative}
+.timeline::before{content:'';position:absolute;left:20px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--teal),rgba(0,168,150,.1))}
+.tl-item{position:relative;padding:0 0 22px 52px}
+.tl-dot{position:absolute;left:12px;top:4px;width:18px;height:18px;border-radius:50%;background:var(--teal);border:3px solid var(--cream);box-shadow:0 0 0 2px var(--teal)}
+.tl-dot.pend{background:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.tl-date{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.tl-title{font-weight:600;font-size:15px;color:var(--navy)}
+.tl-desc{font-size:13px;color:var(--gray);margin-top:3px;line-height:1.5}
+
+/* INFO ROW */
+.irow{display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid rgba(15,34,64,.06)}
+.irow:last-child{border-bottom:none}
+.ilbl{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray);font-weight:600;width:150px;flex-shrink:0}
+.ival{font-size:14px;color:var(--navy);font-weight:500}
+
+/* RDV CONFIRM */
+.rdv-confirm{background:rgba(0,168,150,.08);border:1px solid rgba(0,168,150,.2);border-radius:12px;padding:16px;margin-top:16px;display:none}
+.rdv-confirm.vis{display:block}
+
+/* REMB */
+.remb-item{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid rgba(15,34,64,.06)}
+.remb-item:last-child{border-bottom:none}
+.remb-left h4{font-size:14px;font-weight:600;color:var(--navy)}
+.remb-left p{font-size:12px;color:var(--gray);margin-top:2px}
+.remb-amt{font-size:16px;font-weight:700;color:var(--teal)}
+
+/* BANNER */
+.banner{background:linear-gradient(135deg,var(--navy),var(--navy2));border-radius:16px;padding:20px 24px;margin-bottom:24px;color:white;display:flex;align-items:center;gap:16px}
+.banner-ico{width:48px;height:48px;background:rgba(0,168,150,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.banner h3{font-family:'Playfair Display',serif;font-size:18px;font-weight:600}
+.banner p{font-size:13px;opacity:.65;margin-top:2px}
+
+/* SELECT */
+select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px!important}
+
+/* ALERT BOX */
+.alert-info{background:rgba(0,168,150,.06);border:1px solid rgba(0,168,150,.2);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--teal);margin-bottom:16px}
+.alert-warn{background:rgba(244,185,66,.08);border:1px solid rgba(244,185,66,.3);border-radius:10px;padding:12px 16px;font-size:13px;color:#b7850f;margin-bottom:16px}
+.alert-ok{background:rgba(56,161,105,.08);border:1px solid rgba(56,161,105,.3);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--green);margin-bottom:16px}
+
+/* ====== ADMIN ====== */
+#scr-admin{background:#0d1b2a;min-height:100vh}
+#scr-admin-login{background:#0d1b2a;align-items:center;justify-content:center}
+.adm-topbar{background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.08);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between}
+.adm-logo{display:flex;align-items:center;gap:12px;color:white;font-family:'Playfair Display',serif;font-size:18px}
+.adm-badge{background:rgba(244,185,66,.15);border:1px solid rgba(244,185,66,.3);color:var(--gold);font-size:11px;font-weight:600;padding:4px 10px;border-radius:50px;text-transform:uppercase;letter-spacing:1px}
+.adm-layout{display:flex;min-height:calc(100vh - 64px)}
+.adm-sidebar{width:220px;background:rgba(255,255,255,.03);border-right:1px solid rgba(255,255,255,.06);padding:24px 12px}
+.adm-nitem{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;color:rgba(255,255,255,.5);transition:all .15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;font-family:'DM Sans',sans-serif}
+.adm-nitem:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.9)}
+.adm-nitem.active{background:rgba(244,185,66,.12);color:var(--gold)}
+.adm-content{flex:1;padding:32px}
+.adm-page{display:none;animation:fadeIn .3s ease}
+.adm-page.active{display:block}
+.adm-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px;margin-bottom:20px}
+.adm-ctitle{font-family:'Playfair Display',serif;font-size:17px;color:white;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.aff{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.aff label{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.45);font-weight:600}
+.aff input,.aff select,.aff textarea{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;color:white;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:all .2s}
+.aff input::placeholder{color:rgba(255,255,255,.25)}
+.aff input:focus,.aff select:focus,.aff textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(244,185,66,.1)}
+.aff select option{background:#0d1b2a}
+.aff textarea{resize:vertical;min-height:80px}
+.arow{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.btn-adm{background:var(--gold);color:#0d1b2a;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s}
+.btn-adm:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 6px 20px rgba(244,185,66,.3)}
+.adm-table{width:100%;border-collapse:collapse}
+.adm-table thead th{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4);font-weight:600;padding:10px 14px;text-align:left;background:rgba(255,255,255,.03)}
+.adm-table tbody tr{border-bottom:1px solid rgba(255,255,255,.05)}
+.adm-table tbody tr:hover{background:rgba(255,255,255,.03)}
+.adm-table tbody td{padding:12px 14px;font-size:13px;color:rgba(255,255,255,.75)}
+.adm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.adm-stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px}
+.adm-stat-lbl{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px}
+.adm-stat-val{font-size:26px;font-weight:700;color:var(--gold);margin:6px 0 2px;font-family:'Playfair Display',serif}
+.adm-stat-sub{font-size:11px;color:rgba(255,255,255,.3)}
+.adm-login-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:48px;width:100%;max-width:420px;animation:fadeUp .5s ease}
+
+/* FAB */
+.fab-wrap{position:fixed;bottom:110px;right:32px;z-index:9990}
+.fab-main{width:52px;height:52px;background:var(--gold);border:none;border-radius:50%;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(244,185,66,.45);transition:all .2s;display:flex;align-items:center;justify-content:center;color:#0d1b2a;font-weight:700}
+.fab-main:hover{transform:scale(1.08) rotate(45deg)}
+.fab-menu{position:absolute;bottom:62px;right:0;display:flex;flex-direction:column;gap:8px;opacity:0;pointer-events:none;transition:all .2s;transform:translateY(10px)}
+.fab-menu.open{opacity:1;pointer-events:all;transform:translateY(0)}
+.fab-item{white-space:nowrap;background:var(--navy);color:white;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;box-shadow:var(--sh);transition:all .15s;display:flex;align-items:center;gap:8px}
+.fab-item:hover{background:var(--navy2);transform:translateX(-4px)}
+
+/* URGENCE */
+#urg-btn-wrap{position:fixed;bottom:32px;left:32px;z-index:9998}
+.urg-btn{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#c0392b,#e74c3c);color:white;border:none;border-radius:16px;padding:14px 22px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 24px rgba(231,76,60,.45);animation:pulse-urg 2s infinite;transition:all .2s}
+@keyframes pulse-urg{0%,100%{box-shadow:0 4px 24px rgba(231,76,60,.45);transform:scale(1)}50%{box-shadow:0 4px 36px rgba(231,76,60,.75);transform:scale(1.03)}}
+
+/* MODAL */
+.moverlay{position:fixed;inset:0;background:rgba(15,34,64,.6);backdrop-filter:blur(4px);z-index:9999;display:none;align-items:center;justify-content:center}
+.moverlay.open{display:flex}
+.modal{background:white;border-radius:20px;padding:32px;width:90%;max-width:520px;animation:fadeUp .3s ease;box-shadow:var(--shL);position:relative;max-height:90vh;overflow-y:auto}
+.modal.wide{max-width:640px}
+.modal-dark{background:#0d1b2a;border:1px solid rgba(255,255,255,.1)}
+.mtitle{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:20px;color:var(--navy)}
+.mtitle-dark{color:white}
+.mclose{position:absolute;top:16px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray);line-height:1}
+
+/* TOAST */
+.toast{position:fixed;bottom:32px;right:32px;background:var(--navy);color:white;padding:14px 20px;border-radius:12px;font-size:14px;font-weight:500;box-shadow:var(--shL);z-index:99999;transform:translateY(80px);opacity:0;transition:all .3s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{background:var(--green)}
+.toast.err{background:var(--red)}
+
+/* STEPPER SS */
+.ss-steps{display:flex;gap:0;margin:20px 0}
+.ss-step{flex:1;text-align:center;position:relative}
+.ss-step::before{content:'';position:absolute;top:16px;left:-50%;right:50%;height:2px;background:var(--grayL);z-index:0}
+.ss-step:first-child::before{display:none}
+.ss-step.done::before,.ss-step.active::before{background:var(--teal)}
+.ss-dot{width:32px;height:32px;border-radius:50%;background:var(--grayL);border:2px solid var(--grayL);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:13px;font-weight:700;color:var(--gray);position:relative;z-index:1;transition:all .3s}
+.ss-step.done .ss-dot{background:var(--teal);border-color:var(--teal);color:white}
+.ss-step.active .ss-dot{background:white;border-color:var(--teal);color:var(--teal);box-shadow:0 0 0 4px rgba(0,168,150,.15)}
+.ss-label{font-size:11px;color:var(--gray);font-weight:500}
+.ss-step.done .ss-label{color:var(--teal)}
+.ss-step.active .ss-label{color:var(--navy);font-weight:600}
+
+/* NOTIF BADGE */
+.notif-dot{width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;margin-left:6px;vertical-align:middle}
+
+/* MODIFICATION INFOS */
+.modif-pending{background:rgba(244,185,66,.08);border:1px solid rgba(244,185,66,.3);border-radius:10px;padding:12px 16px;margin-top:8px;font-size:13px}
+.modif-pending-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:#b7850f;font-weight:600;margin-bottom:4px}
+
+/* MEDECIN ESPACE */
+#scr-medecin{background:var(--cream)}
+
+/* ALERTES SAMU */
+.samu-alert-card{background:rgba(231,76,60,.07);border:1px solid rgba(231,76,60,.28);border-radius:14px;padding:20px;margin-bottom:14px;position:relative;animation:alertSlide .4s ease}
+.samu-alert-card.resolved{background:rgba(56,161,105,.05);border-color:rgba(56,161,105,.2);opacity:.75}
+@keyframes alertSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.samu-alert-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.samu-alert-badge{display:flex;align-items:center;gap:8px}
+.samu-pulse{width:10px;height:10px;border-radius:50%;background:#e74c3c;flex-shrink:0;box-shadow:0 0 0 0 rgba(231,76,60,.5);animation:samu-ping 1.5s infinite}
+.samu-alert-card.resolved .samu-pulse{background:var(--green);animation:none;box-shadow:none}
+@keyframes samu-ping{0%{box-shadow:0 0 0 0 rgba(231,76,60,.5)}70%{box-shadow:0 0 0 10px rgba(231,76,60,0)}100%{box-shadow:0 0 0 0 rgba(231,76,60,0)}}
+.samu-alert-type{font-size:14px;font-weight:700;color:#fc8181}
+.samu-alert-card.resolved .samu-alert-type{color:#68d391}
+.samu-alert-time{font-size:11px;color:rgba(255,255,255,.35);white-space:nowrap;flex-shrink:0}
+.samu-alert-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.samu-info-block{background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px}
+.samu-info-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.35);font-weight:600;margin-bottom:3px}
+.samu-info-val{font-size:13px;color:rgba(255,255,255,.85);font-weight:500;line-height:1.4}
+.samu-alert-actions{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.btn-samu-resolve{background:rgba(56,161,105,.15);border:1px solid rgba(56,161,105,.3);color:#68d391;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn-samu-resolve:hover{background:rgba(56,161,105,.3)}
+.btn-samu-note{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.6);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn-samu-note:hover{background:rgba(255,255,255,.1);color:white}
+.samu-note-zone{margin-top:10px;display:none}
+.samu-note-zone.open{display:block}
+.samu-note-zone input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:9px 12px;color:white;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:6px}
+.samu-note-zone input:focus{border-color:#e74c3c;box-shadow:0 0 0 2px rgba(231,76,60,.15)}
+.samu-stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.samu-stat-mini{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px 10px;text-align:center}
+.samu-stat-mini.red{border-color:rgba(231,76,60,.25);background:rgba(231,76,60,.06)}
+.samu-stat-mini.green{border-color:rgba(56,161,105,.2);background:rgba(56,161,105,.04)}
+.samu-stat-mini .sv{font-size:30px;font-weight:700;font-family:'Playfair Display',serif;color:white;line-height:1}
+.samu-stat-mini.red .sv{color:#fc8181}
+.samu-stat-mini.green .sv{color:#68d391}
+.samu-stat-mini .sl{font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.8px;margin-top:5px}
+.samu-empty{text-align:center;padding:56px 20px;color:rgba(255,255,255,.25)}
+.samu-empty .ico{font-size:52px;margin-bottom:14px}
+.samu-empty p{font-size:14px;line-height:1.6}
+.samu-sidebar-btn{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:white;transition:all .15s;margin-bottom:2px;border:1px solid rgba(231,76,60,.25);background:rgba(231,76,60,.12);width:100%;text-align:left;font-family:'DM Sans',sans-serif;margin-top:14px}
+.samu-sidebar-btn:hover{background:rgba(231,76,60,.22)}
+.samu-sidebar-btn.active{background:rgba(231,76,60,.25);color:#fc8181;border-color:rgba(231,76,60,.4)}
+.samu-notif-count{background:#e74c3c;color:white;border-radius:50px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:auto;min-width:20px;text-align:center}
+.samu-live-dot{width:7px;height:7px;border-radius:50%;background:#e74c3c;display:inline-block;flex-shrink:0;animation:samu-ping 1.5s infinite}
+.samu-resolved-note{margin-top:10px;background:rgba(56,161,105,.08);border-radius:8px;padding:8px 12px;font-size:12px;color:#68d391;border-left:3px solid #38a169}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- ========== LOGIN PATIENT ========== -->
+<div id="scr-login" class="screen active">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="cross"><span style="font-size:26px;color:white">✚</span></div>
+      <h1>Centre Hospitalier de Amboise</h1>
+      <p>Espace Patient Sécurisé</p>
+    </div>
+    <div class="fgrp"><label>Identifiant patient</label><input type="text" id="li-user" placeholder="ex: P-00001"></div>
+    <div class="fgrp"><label>Mot de passe</label><input type="password" id="li-pass" placeholder="••••••••"></div>
+    <button class="btn-prim" onclick="doLogin()">Connexion à mon espace</button>
+    <div class="lerr" id="li-err">Identifiant ou mot de passe incorrect.</div>
+    <p style="text-align:center;margin-top:20px;font-size:12px;color:rgba(255,255,255,.3)">
+      Identifiants remis par l'établissement &nbsp;|&nbsp;
+      <a href="#" onclick="showScreen('scr-admin-login')" style="color:rgba(255,255,255,.2);text-decoration:none">●</a>
+      <a href="#" onclick="showScreen('scr-med-login')" style="color:rgba(255,255,255,.2);text-decoration:none">●</a>
+    </p>
+  </div>
+</div>
+
+<!-- ========== LOGIN ADMIN ========== -->
+<div id="scr-admin-login" class="screen">
+  <div class="adm-login-card" style="position:relative;z-index:1">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;background:rgba(244,185,66,.12);border-radius:14px;font-size:26px;margin-bottom:14px">🔐</div>
+      <h1 style="font-family:'Playfair Display',serif;color:white;font-size:24px;margin-bottom:6px">Accès Administrateur</h1>
+      <p style="color:rgba(255,255,255,.4);font-size:13px">Centre Hospitalier de Amboise</p>
+    </div>
+    <div class="aff"><input style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:14px;color:white;font-size:15px;font-family:'DM Sans',sans-serif;outline:none;width:100%" type="password" id="adm-pass" placeholder="Mot de passe administrateur"></div>
+    <button class="btn-adm" style="width:100%;margin-top:8px" onclick="doAdminLogin()">Accéder au panneau</button>
+    <p style="color:rgba(255,255,255,.25);font-size:12px;text-align:center;margin-top:16px;cursor:pointer" onclick="showScreen('scr-login')">← Retour</p>
+    <div id="adm-err" style="display:none;color:#fc8181;font-size:13px;text-align:center;margin-top:10px">Mot de passe incorrect.</div>
+  </div>
+</div>
+
+<!-- ========== LOGIN MÉDECIN ========== -->
+<div id="scr-med-login" class="screen" style="background:linear-gradient(135deg,#0f2240,#1a3560);align-items:center;justify-content:center">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="cross"><span style="font-size:26px;color:white">🩺</span></div>
+      <h1>Espace Médecin</h1>
+      <p>Centre Hospitalier de Amboise</p>
+    </div>
+    <div class="fgrp"><label>Identifiant médecin</label><input type="text" id="med-user" placeholder="ex: M-001"></div>
+    <div class="fgrp"><label>Mot de passe</label><input type="password" id="med-pass" placeholder="••••••••"></div>
+    <button class="btn-prim" onclick="doMedLogin()">Connexion</button>
+    <div class="lerr" id="med-err">Identifiant ou mot de passe incorrect.</div>
+    <p style="text-align:center;margin-top:16px;font-size:12px;color:rgba(255,255,255,.3);cursor:pointer" onclick="showScreen('scr-login')">← Retour</p>
+  </div>
+</div>
+
+<!-- ========== PATIENT APP ========== -->
+<div id="scr-app" class="screen">
+  <div class="topbar">
+    <div class="tb-logo"><div class="ico">✚</div><h2>Centre Hospitalier de Amboise</h2></div>
+    <div class="tb-right">
+      <div class="ubadge"><div class="uavt" id="pt-avt">MP</div><span class="uname" id="pt-name">Patient</span></div>
+      <button class="btn-logout" onclick="logout()">Déconnexion</button>
+    </div>
+  </div>
+  <div class="app-layout">
+    <div class="sidebar">
+      <div class="nav-sec">Mon Espace</div>
+      <button class="nitem active" onclick="showPage('pg-dash',this)"><span class="nico">🏠</span>Tableau de bord</button>
+      <button class="nitem" onclick="showPage('pg-consult',this)"><span class="nico">📋</span>Mes consultations</button>
+      <button class="nitem" id="nav-rdv-btn" onclick="showPage('pg-rdv',this)"><span class="nico">📅</span>Prendre un RDV</button>
+      <div class="nav-sec">Finances</div>
+      <button class="nitem" onclick="showPage('pg-fact',this)"><span class="nico">🧾</span>Mes factures</button>
+      <button class="nitem" onclick="showPage('pg-remb',this)"><span class="nico">💊</span>Remboursements SS</button>
+      <div class="nav-sec">Mon Profil</div>
+      <button class="nitem" onclick="showPage('pg-profil',this)"><span class="nico">👤</span>Mes informations</button>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="pg-dash" class="page active">
+        <div class="ph"><h1 id="dash-greet">Bonjour</h1><p>Résumé de votre espace patient.</p></div>
+        <div class="banner" id="dash-banner">
+          <div class="banner-ico">📅</div>
+          <div><h3>Prochain rendez-vous</h3><p id="dash-next-rdv">Aucun rendez-vous à venir</p></div>
+        </div>
+        <div class="sgrid">
+          <div class="scard"><div class="slbl">Consultations</div><div class="sval" id="ds-consult">0</div><div class="ssub">réalisées</div></div>
+          <div class="scard gold"><div class="slbl">Factures en attente</div><div class="sval" id="ds-fact">0</div><div class="ssub">à régler</div></div>
+          <div class="scard navy"><div class="slbl">Remboursement SS</div><div class="sval" id="ds-remb">—</div><div class="ssub">en cours</div></div>
+        </div>
+        <div class="card"><div class="ctitle">Activité récente</div><div class="timeline" id="ds-timeline"></div></div>
+      </div>
+
+      <!-- CONSULTATIONS -->
+      <div id="pg-consult" class="page">
+        <div class="ph"><h1>Mes consultations</h1><p>Historique complet de vos consultations.</p></div>
+        <div class="card">
+          <table><thead><tr><th>Date</th><th>Médecin</th><th>Spécialité</th><th>Diagnostic</th><th>Statut</th><th></th></tr></thead>
+          <tbody id="pt-consult-tb"></tbody></table>
+        </div>
+      </div>
+
+      <!-- RDV -->
+      <div id="pg-rdv" class="page">
+        <div class="ph"><h1>Prendre un rendez-vous</h1><p>Choisissez un médecin, une date et un créneau disponible.</p></div>
+        <div class="card">
+          <div class="ctitle">Mes rendez-vous</div>
+          <table><thead><tr><th>Date</th><th>Heure</th><th>Médecin</th><th>Motif</th><th>Statut</th></tr></thead>
+          <tbody id="pt-rdv-tb"></tbody></table>
+        </div>
+        <div class="card">
+          <div class="ctitle">Nouveau rendez-vous</div>
+          <div class="frow">
+            <div class="ff"><label>Spécialité</label>
+              <select id="rdv-spec" onchange="filterMedRdv()">
+                <option value="">Toutes spécialités</option>
+              </select>
+            </div>
+            <div class="ff"><label>Médecin</label>
+              <select id="rdv-med"><option value="">Choisir un médecin</option></select>
+            </div>
+          </div>
+          <div class="frow">
+            <div class="ff"><label>Date souhaitée</label><input type="date" id="rdv-date" oninput="showSlots()"></div>
+            <div class="ff"><label>Motif</label><input type="text" id="rdv-motif-txt" placeholder="Raison de la consultation"></div>
+          </div>
+        </div>
+        <div class="card" id="slots-card" style="display:none">
+          <div class="ctitle">Créneaux disponibles</div>
+          <div class="slots-grid" id="slots-grid"></div>
+          <div class="rdv-confirm" id="rdv-confirm">
+            <p style="font-weight:600;color:var(--teal);margin-bottom:6px">✓ Créneau sélectionné</p>
+            <p style="font-size:13px;color:var(--navy)" id="rdv-confirm-txt">—</p>
+            <button class="btn-act" style="margin-top:12px" onclick="confirmRdv()">Envoyer la demande de RDV</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FACTURES -->
+      <div id="pg-fact" class="page">
+        <div class="ph"><h1>Mes factures</h1><p>Consultez et payez vos factures.</p></div>
+        <div class="card">
+          <table><thead><tr><th>N° Facture</th><th>Date</th><th>Prestation</th><th>Montant</th><th>Part SS</th><th>Reste</th><th>Statut</th><th></th></tr></thead>
+          <tbody id="pt-fact-tb"></tbody></table>
+        </div>
+      </div>
+
+      <!-- REMBOURSEMENTS -->
+      <div id="pg-remb" class="page">
+        <div class="ph"><h1>Remboursements Sécurité Sociale</h1><p>Suivez l'avancement de vos dossiers.</p></div>
+        <div class="card"><div class="ctitle">Suivi des dossiers</div><div id="remb-list"></div></div>
+      </div>
+
+      <!-- PROFIL -->
+      <div id="pg-profil" class="page">
+        <div class="ph"><h1>Mes informations</h1><p>Consultez et demandez des modifications de vos données.</p></div>
+        <div class="card" id="profil-card"></div>
+        <div class="card">
+          <div class="ctitle">Demander une modification</div>
+          <div class="alert-info">Toute modification doit être validée par l'administrateur avant d'être appliquée.</div>
+          <div class="frow">
+            <div class="ff"><label>Champ à modifier</label>
+              <select id="modif-champ">
+                <option value="email">Email</option>
+                <option value="tel">Téléphone</option>
+                <option value="adresse">Adresse</option>
+                <option value="medecin_traitant">Médecin traitant</option>
+              </select>
+            </div>
+            <div class="ff"><label>Nouvelle valeur</label><input type="text" id="modif-val" placeholder="Nouvelle information"></div>
+          </div>
+          <div class="ff" style="margin-bottom:16px"><label>Justification</label><textarea id="modif-just" placeholder="Expliquez pourquoi cette modification est nécessaire..."></textarea></div>
+          <button class="btn-act" onclick="demandeModif()">Envoyer la demande</button>
+          <div id="modif-pending-zone" style="margin-top:16px"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========== MÉDECIN APP ========== -->
+<div id="scr-medecin" class="screen">
+  <div class="topbar">
+    <div class="tb-logo"><div class="ico">🩺</div><h2>Centre Hospitalier de Amboise</h2></div>
+    <div class="tb-right">
+      <div class="ubadge"><div class="uavt" style="background:linear-gradient(135deg,#1a3560,#00a896)" id="med-avt">DR</div><span class="uname" id="med-display-name">Médecin</span></div>
+      <span class="adm-badge" style="background:rgba(0,168,150,.15);border-color:rgba(0,168,150,.3);color:var(--teal)">Médecin</span>
+      <button class="btn-logout" onclick="logout()">Déconnexion</button>
+    </div>
+  </div>
+  <div class="app-layout">
+    <div class="sidebar">
+      <div class="nav-sec">Espace Médecin</div>
+      <button class="nitem active" onclick="showMedPage('med-pg-dash',this)"><span class="nico">🏠</span>Tableau de bord</button>
+      <button class="nitem" onclick="showMedPage('med-pg-rdv',this)"><span class="nico">📅</span>Mes rendez-vous</button>
+      <button class="nitem" onclick="showMedPage('med-pg-patients',this)"><span class="nico">👥</span>Mes patients</button>
+    </div>
+    <div class="content">
+      <div id="med-pg-dash" class="page active">
+        <div class="ph"><h1 id="med-greet">Bonjour Dr.</h1><p>Aperçu de votre activité.</p></div>
+        <div class="sgrid">
+          <div class="scard"><div class="slbl">RDV aujourd'hui</div><div class="sval" id="med-ds-rdv">0</div><div class="ssub">à venir</div></div>
+          <div class="scard gold"><div class="slbl">RDV en attente</div><div class="sval" id="med-ds-attente">0</div><div class="ssub">à confirmer</div></div>
+          <div class="scard navy"><div class="slbl">Patients suivis</div><div class="sval" id="med-ds-patients">0</div><div class="ssub">total</div></div>
+        </div>
+        <div class="card"><div class="ctitle">Prochains rendez-vous</div><table><thead><tr><th>Patient</th><th>Date</th><th>Heure</th><th>Motif</th><th>Statut</th></tr></thead><tbody id="med-rdv-preview"></tbody></table></div>
+      </div>
+      <div id="med-pg-rdv" class="page">
+        <div class="ph"><h1>Mes rendez-vous</h1><p>Gérez vos rendez-vous patients.</p></div>
+        <div class="card"><table><thead><tr><th>Patient</th><th>Date</th><th>Heure</th><th>Motif</th><th>Statut</th><th>Actions</th></tr></thead><tbody id="med-rdv-full"></tbody></table></div>
+      </div>
+      <div id="med-pg-patients" class="page">
+        <div class="ph"><h1>Mes patients</h1><p>Patients ayant eu une consultation avec vous.</p></div>
+        <div class="card"><table><thead><tr><th>ID</th><th>Nom</th><th>Prénom</th><th>DDN</th><th>Dernière consult.</th></tr></thead><tbody id="med-patients-tb"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ADMIN APP ========== -->
+<div id="scr-admin" class="screen">
+  <div class="adm-topbar">
+    <div class="adm-logo"><span style="font-size:20px">✚</span>Centre Hospitalier de Amboise<span class="adm-badge">Administration</span></div>
+    <button onclick="showScreen('scr-login')" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6);border-radius:8px;padding:8px 16px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px">Déconnexion</button>
+  </div>
+  <div class="adm-layout">
+    <div class="adm-sidebar">
+      <button class="adm-nitem active" onclick="showAdmPage('ap-dash',this)">📊 Tableau de bord</button>
+      <button class="adm-nitem" onclick="showAdmPage('ap-patients',this)">👥 Patients</button>
+      <button class="adm-nitem" onclick="showAdmPage('ap-medecins',this)">🩺 Médecins</button>
+      <button class="adm-nitem" id="adm-rdv-nav" onclick="showAdmPage('ap-rdv',this)">📅 Rendez-vous <span class="notif-dot" id="rdv-notif-dot" style="display:none"></span></button>
+      <button class="adm-nitem" onclick="showAdmPage('ap-consult',this)">📋 Consultations</button>
+      <button class="adm-nitem" onclick="showAdmPage('ap-fact',this)">🧾 Factures</button>
+      <button class="adm-nitem" onclick="showAdmPage('ap-remb',this)">💊 Remboursements SS</button>
+      <button class="adm-nitem" id="adm-modif-nav" onclick="showAdmPage('ap-modifs',this)">✏️ Modif. infos <span class="notif-dot" id="modif-notif-dot" style="display:none"></span></button>
+      <button class="samu-sidebar-btn" id="adm-samu-nav" onclick="showAdmPage('ap-samu',this)"><span class="samu-live-dot"></span>Alertes SAMU <span class="samu-notif-count" id="samu-notif-count" style="display:none">0</span></button>
+    </div>
+    <div class="adm-content">
+
+      <!-- ADMIN DASH -->
+      <div id="ap-dash" class="adm-page active">
+        <h1 style="font-family:'Playfair Display',serif;color:white;font-size:28px;margin-bottom:24px">Vue d'ensemble</h1>
+        <div class="adm-stats">
+          <div class="adm-stat"><div class="adm-stat-lbl">Patients</div><div class="adm-stat-val" id="a-nb-pts">0</div><div class="adm-stat-sub">actifs</div></div>
+          <div class="adm-stat"><div class="adm-stat-lbl">Médecins</div><div class="adm-stat-val" id="a-nb-meds">0</div><div class="adm-stat-sub">enregistrés</div></div>
+          <div class="adm-stat"><div class="adm-stat-lbl">RDV en attente</div><div class="adm-stat-val" id="a-nb-rdv">0</div><div class="adm-stat-sub">à traiter</div></div>
+          <div class="adm-stat"><div class="adm-stat-lbl">Factures impayées</div><div class="adm-stat-val" id="a-nb-imp">0</div><div class="adm-stat-sub">à régler</div></div>
+        </div>
+        <div class="adm-card">
+          <div class="adm-ctitle">Derniers rendez-vous</div>
+          <table class="adm-table"><thead><tr><th>Patient</th><th>Médecin</th><th>Date</th><th>Heure</th><th>Statut</th></tr></thead>
+          <tbody id="adm-rdv-preview"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ADMIN PATIENTS -->
+      <div id="ap-patients" class="adm-page">
+        <h1 style="font-family:'Playfair Display',serif;color:white;font-size:28px;margin-bottom:24px">Gestion des patients</h1>
+        <div class="adm-card">
+          <div class="adm-ctitle">Créer un compte patient</div>
+          <div class="arow"><div class="aff"><label>Nom</label><input type="text" id="np-nom" placeholder="Dupont"></div><div class="aff"><label>Prénom</label><input type="text" id="np-prenom" placeholder="Marie"></div></div>
+          <div class="arow"><div class="aff"><label>Date de naissance</label><input type="date" id="np-ddn"></div><div class="aff"><label>N° Sécurité Sociale</label><input type="text" id="np-nss" placeholder="1 85 05 75 123 456 78"></div></div>
+          <div class="arow"><div class="aff"><label>Identifiant (auto)</label><input type="text" id="np-id" readonly style="opacity:.5"></div><div class="aff"><label>Mot de passe</label><input type="text" id="np-mdp" placeholder="Mot de passe initial"></div></div>
+          <div class="arow"><div class="aff"><label>Email</label><input type="email" id="np-email" placeholder="patient@email.fr"></div><div class="aff"><label>Téléphone</label><input type="tel" id="np-tel" placeholder="06 12 34 56 78"></div></div>
+          <div class="aff"><label>Adresse</label><input type="text" id="np-adr" placeholder="12 rue de la Paix, Amboise"></div>
+          <div class="aff"><label>Médecin traitant</label><select id="np-med-trait"><option value="">Aucun</option></select></div>
+          <button class="btn-adm" onclick="createPatient()">Créer le compte patient</button>
+        </div>
+        <div class="adm-card">
+          <div class="adm-ctitle">Liste des patients</div>
+          <table class="adm-table"><thead><tr><th>ID</th><th>Nom</th><th>Prénom</th><th>N° SS</th><th>Tél</th><th>Mot de passe</th></tr></thead>
+          <tbody id="adm-pts-tb"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ADMIN MÉDECINS -->
+      <div id="ap-medecins" class="adm-page">
+        <h1 style="font-family:'Playfair Display',serif;color:white;font-size:28px;margin-bottom:24px">Gestion des médecins</h1>
+        <div class="adm-card">
+          <div class="adm-ctitle">Ajouter un médecin</div>
+          <div class="arow"><div class="aff"><label>Nom</label><input type="text" id="nm-nom" placeholder="Martin"></div><div class="aff"><label>Prénom</label><input type="text" id="nm-prenom" placeholder="Jean"></div></div>
+          <div class="arow"><div class="aff"><label>Spécialité</label><input type="text" id="nm-spec" placeholder="Cardiologie"></div><div class="aff"><label>Identifiant (auto)</label><input type="text" id="nm-id" readonly style="opacity:.5"></div></div>
+          <div class="arow"><div class="aff"><label>Mot de passe</label><input type="text" id="nm-mdp" placeholder="Mot de passe médecin"></div><div class="aff"><label>Email</label><input type="email" id="nm-email" placeholder="docteur@ch-amboise.fr"></div></div>
+          <div class="aff"><label>Téléphone / Cabinet</label><input type="text" id="nm-tel" placeholder="02 47 XX XX XX"></div>
+          <button class="btn-adm" onclick="createMedecin()">Ajouter le médecin</button>
+        </div>
+        <div class="adm-card">
+          <div class="adm-ctitle">Liste des médecins</div>
+          <table class="adm-table"><thead><tr><th>ID</th><th>Nom</th><th>Spécialité</th><th>Email</th><th>Mot de passe</th></tr></thead>
+          <tbody id="adm-meds-tb"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ADMIN RDV -->
+      <div id="ap-rdv" class="adm-page">
+        <h1 style="font-family:'Playfair Display',serif;color:white;font-size:28px;margin-bottom:24px">Rendez-vous</h1>
+        <div class="adm-card">
+          <div class="adm-ctitle">Créer un RDV</div>
+          <div class="arow"><div class="aff"><label>Patient</label><select id="rdv-pt-sel"></select></div><div class="aff"><label>Médecin</label><select id="rdv-med-sel"></select></div></div>
+          <div class="arow"><div class="aff"><label>Date</label><input type="date" id="rdv-date-adm"></div><div class="aff"><label>Heure</label><select id="rdv-heure-adm"><option>08h30</option><option>09h00</option><option>09h30</option><option>10h00</option><option>10h30</option><option>11h00</option><option>11h30</option><option>14h00</option><option>14h30</option><option>15h00</option><option>15h30</option><option>16h00</option></select></div></div>
+          <div class="aff"><label>Motif</label><input type="text" id="rdv-motif-adm" placeholder="Motif de la consultation"></div>
+          <button class="btn-adm" onclick="createRdvAdmin()">Créer le rendez-vous</button>
+        </div>
+        <div class="adm-card">
+          <div class="adm-ctitle">Tous les rendez-vous</div>
+          <table class="adm-table"><thead><tr><th>Patient</th><th>Médecin</th><th>Date</th><th>Heure</th><th>Motif</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="adm-rdv-tb"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ADMIN CONSULTATIONS -->
+      <div id="ap-consult" class="adm-page">
+        <h1 style="font-family:'Playfair Display',serif;color:white;font-size:28px;margin-bottom:24px">Consultations</h1>
+        <div class="adm-card">
+          <div class="adm-ctitle">Ajouter une consultation</div>
+          <div class="arow"><div class="aff"><label>Patient</label><select id="c-pt"></select></div><div class="aff"><label>Date</label><input type="date" id="c-date"></div></div>
+          <div class="arow"><div class="aff"><label>Médecin</label><select id="c-med"></select></div><div class="aff"><label>Spécialité (auto)</label><input type="text" id="c-spec" readonly style="opacity:.6"></div></div>
+          <div class="aff"><label>Diagnostic / Notes</label><textarea id="c-notes" placeholder="Notes de consultation..."></textarea></div>
+          <div class="arow"><div class="aff"><label>Montant (€)</label><input type="number" id="c-mnt" placeholder="150"></div><div class="aff"><label>Part SS (%)</label><input type="number" id="c-pct" placeholder="70"></div></div>
+          <button class="btn-adm" onclick="addConsultation()">Enregistrer</button>
+        </div>
+        <div class="adm-card">
+          <div class="adm-ctitle">Consultations enregistrées</div>
+          <table class="adm-table"><thead><tr><th>Patient</th><th>Date</th><th>Médecin</th><th>Spécialité</th><th>Diagnostic</th><th>Montant</th></tr></thead>
+          <tbody id="adm-consult-tb"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ADMIN FACTURES -->
+      <div id="ap-fact" class="adm-page">
+        <h1 style="font-family:'Playfair Display',serif;color:white;font-size:28px;margin-bottom:24px">Factures</h1>
+        <div class="adm-card">
+          <div class="adm-ctitle">Créer une facture manuelle</div>
+          <div class="arow"><div class="aff"><label>Patient</label><select id="f-pt"></select></div><div class="aff"><label>Date</label><input type="date" id="f-date"></div></div>
+          <div class="arow"><div class="aff"><label>Prestation</label><input type="text" id="f-prest" placeholder="Description"></div><div class="aff"><label>Montant (€)</label><input type="number" id="f-mnt" placeholder="150"></div></div>
+          <div class="arow"><div class="aff"><label>Part SS (%)</label><input type="number" id="f-pct" placeholder="70"></div><div class="aff"><label>Statut</label><select id="f-stat"><option>En attente</option><option>Payée</option></select></div></div>
+          <button class="btn-adm" onclick="createFacture()">Créer la facture</button>
+        </div>
+        <div class="adm-card">
+          <div class="adm-ctitle">Toutes les factures</div>
+          <table class="adm-table"><thead><tr><th>N° Facture</th><th>Patient</th><th>Date</th><th>Prestation</th><th>Montant</th><th>Remb. SS</th><th>Reste</th><th>Statut</th><th>Action</th></tr></thead>
+          <tbody id="adm-fact-tb"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ADMIN REMBOURSEMENTS SS -->
+      <div id="ap-remb" class="adm-page">
+        <h1 style="font-family:'Playfair Display',serif;color:white;font-size:28px;margin-bottom:24px">Remboursements Sécurité Sociale</h1>
+        <div class="adm-card">
+          <div class="adm-ctitle">Gérer les étapes de remboursement</div>
+          <table class="adm-table"><thead><tr><th>Patient</th><th>Facture</th><th>Prestation</th><th>Montant SS</th><th>Étape actuelle</th><th>Modifier étape</th></tr></thead>
+          <tbody id="adm-remb-tb"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ADMIN MODIFS INFOS -->
+      <div id="ap-modifs" class="adm-page">
+        <h1 style="font-family:'Playfair Display',serif;color:white;font-size:28px;margin-bottom:24px">Demandes de modification</h1>
+        <div class="adm-card">
+          <table class="adm-table"><thead><tr><th>Patient</th><th>Champ</th><th>Valeur actuelle</th><th>Nouvelle valeur</th><th>Justification</th><th>Actions</th></tr></thead>
+          <tbody id="adm-modifs-tb"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ADMIN ALERTES SAMU -->
+      <div id="ap-samu" class="adm-page">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+          <h1 style="font-family:'Playfair Display',serif;color:white;font-size:28px">🚨 Alertes SAMU en temps réel</h1>
+          <span id="samu-live-indicator" style="display:flex;align-items:center;gap:6px;background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.25);border-radius:50px;padding:5px 14px;font-size:12px;color:#fc8181;font-weight:600"><span class="samu-live-dot"></span>EN DIRECT</span>
+        </div>
+        <div class="samu-stats-bar">
+          <div class="samu-stat-mini red"><div class="sv" id="samu-total">0</div><div class="sl">Total alertes</div></div>
+          <div class="samu-stat-mini red"><div class="sv" id="samu-actives">0</div><div class="sl">En cours</div></div>
+          <div class="samu-stat-mini green"><div class="sv" id="samu-resolues">0</div><div class="sl">Résolues</div></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div style="display:flex;gap:8px">
+            <button onclick="filterSamu('all')" id="samu-f-all" style="background:rgba(231,76,60,.2);border:1px solid rgba(231,76,60,.3);color:#fc8181;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Toutes</button>
+            <button onclick="filterSamu('active')" id="samu-f-active" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);border-radius:8px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">En cours</button>
+            <button onclick="filterSamu('resolved')" id="samu-f-resolved" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);border-radius:8px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Résolues</button>
+          </div>
+          <button onclick="clearResolvedAlerts()" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.4);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">🗑 Effacer résolues</button>
+        </div>
+        <div id="samu-alerts-list">
+          <div class="samu-empty"><div class="ico">🛡️</div><p>Aucune alerte SAMU pour le moment.<br>Les alertes apparaîtront ici en temps réel dès qu'un patient déclenchera le bouton d'urgence.</p></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- FAB ADMIN -->
+<div class="fab-wrap" id="fab-wrap" style="display:none">
+  <div class="fab-menu" id="fab-menu">
+    <button class="fab-item" onclick="showAdmPage('ap-rdv',document.querySelector(\'.adm-nitem[onclick*=ap-rdv]\'));closeFab()">📅 Nouveau RDV</button>
+    <button class="fab-item" onclick="showAdmPage('ap-fact',document.querySelector(\'.adm-nitem[onclick*=ap-fact]\'));closeFab()">🧾 Nouvelle facture</button>
+    <button class="fab-item" onclick="showAdmPage('ap-patients',document.querySelector(\'.adm-nitem[onclick*=ap-patients]\'));closeFab()">👤 Nouveau patient</button>
+    <button class="fab-item" onclick="showAdmPage('ap-dash',document.querySelector(\'.adm-nitem[onclick*=ap-dash]\'));closeFab()">🏠 Tableau de bord</button>
+  </div>
+  <button class="fab-main" id="fab-btn" onclick="toggleFab()">+</button>
+</div>
+
+<!-- URGENCE -->
+<div id="urg-btn-wrap">
+  <button class="urg-btn" onclick="openUrgence()">
+    <span style="font-size:22px">📞</span>
+    <div style="text-align:left"><div>Appel SAMU</div><div style="font-size:11px;font-weight:400;opacity:.85">Urgences — 15</div></div>
+  </button>
+</div>
+
+<!-- MODAL URGENCE STEP 1 - QUE SE PASSE-T-IL -->
+<div class="moverlay" id="m-urg1">
+  <div class="modal">
+    <button class="mclose" onclick="closeM('m-urg1')">✕</button>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:64px;height:64px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:28px">🚨</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:#c0392b">Appel d'Urgence — SAMU 15</h2>
+      <p style="color:var(--gray);font-size:13px;margin-top:6px">Centre Hospitalier de Amboise</p>
+    </div>
+    <div class="ff" style="margin-bottom:16px">
+      <label>Que se passe-t-il ? (sélectionnez)</label>
+      <select id="urg-type">
+        <option value="">-- Sélectionnez la situation --</option>
+        <option>Douleur thoracique / Malaise cardiaque</option>
+        <option>Difficulté respiratoire</option>
+        <option>Perte de connaissance</option>
+        <option>Accident / Chute avec blessure grave</option>
+        <option>AVC (trouble de la parole, paralysie)</option>
+        <option>Hémorragie importante</option>
+        <option>Réaction allergique sévère</option>
+        <option>Crise d'épilepsie</option>
+        <option>Douleur abdominale intense</option>
+        <option>Autre urgence médicale</option>
+      </select>
+    </div>
+    <div class="ff" style="margin-bottom:16px">
+      <label>Précisez la situation</label>
+      <textarea id="urg-desc" placeholder="Décrivez ce qui se passe en quelques mots..." style="min-height:70px"></textarea>
+    </div>
+    <div class="ff" style="margin-bottom:16px">
+      <label>Lieu de l'appel</label>
+      <input type="text" id="urg-lieu" placeholder="Ex: Chambre 214, Bâtiment A, Domicile 12 rue...">
+    </div>
+    <div class="ff" style="margin-bottom:20px">
+      <label>Localisation précise (ville / adresse)</label>
+      <input type="text" id="urg-ville" placeholder="Ex: Amboise, 37400 — Résidence Les Pins">
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeM('m-urg1')" style="flex:1;background:var(--grayL);border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--gray)">Annuler</button>
+      <button onclick="goUrgStep2()" style="flex:2;background:linear-gradient(135deg,#c0392b,#e74c3c);border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;color:white">Continuer →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL URGENCE STEP 2 - CONFIRMATION -->
+<div class="moverlay" id="m-urg2">
+  <div class="modal">
+    <button class="mclose" onclick="closeM('m-urg2')">✕</button>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:40px;margin-bottom:10px">🚑</div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:20px;color:#c0392b">Confirmation de l'alerte</h2>
+    </div>
+    <div style="background:#fef2f2;border-radius:12px;padding:16px;margin-bottom:18px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:#e74c3c;font-weight:600;margin-bottom:10px">Récapitulatif</div>
+      <div id="urg-recap" style="font-size:13px;color:var(--navy);line-height:1.8"></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeM('m-urg2');openUrgence()" style="flex:1;background:var(--grayL);border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--gray)">← Modifier</button>
+      <button id="btn-urg-confirm" onclick="confirmUrgence()" style="flex:2;background:linear-gradient(135deg,#c0392b,#e74c3c);border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;color:white;box-shadow:0 4px 16px rgba(231,76,60,.4)">🚨 Déclencher l'alerte SAMU</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL URGENCE SENT -->
+<div class="moverlay" id="m-urg-sent">
+  <div class="modal" style="text-align:center">
+    <div style="width:72px;height:72px;background:#f0fdf4;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:32px">✅</div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:#166534;margin-bottom:8px">Alerte envoyée</h2>
+    <p style="color:var(--gray);font-size:14px;margin-bottom:8px">Le SAMU du Centre Hospitalier de Amboise a été notifié. Restez sur place.</p>
+    <p style="color:#e74c3c;font-size:14px;font-weight:700;margin-bottom:24px">📞 Composez le <strong>15</strong> si la situation s'aggrave</p>
+    <button onclick="closeM('m-urg-sent')" style="background:var(--navy);border:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:white;width:100%">Compris</button>
+  </div>
+</div>
+
+<!-- MODAL CONSULT DETAIL -->
+<div class="moverlay" id="m-consult">
+  <div class="modal wide"><button class="mclose" onclick="closeM('m-consult')">✕</button>
+  <div class="mtitle">Détail de la consultation</div>
+  <div id="m-consult-content"></div></div>
+</div>
+
+<!-- MODAL DÉCALER RDV -->
+<div class="moverlay" id="m-decal">
+  <div class="modal">
+    <button class="mclose" onclick="closeM('m-decal')">✕</button>
+    <div class="mtitle">Décaler le rendez-vous</div>
+    <input type="hidden" id="decal-rdv-id">
+    <div class="frow">
+      <div class="ff"><label>Nouvelle date</label><input type="date" id="decal-date"></div>
+      <div class="ff"><label>Nouvel horaire</label>
+        <select id="decal-heure"><option>08h30</option><option>09h00</option><option>09h30</option><option>10h00</option><option>10h30</option><option>11h00</option><option>11h30</option><option>14h00</option><option>14h30</option><option>15h00</option><option>15h30</option><option>16h00</option></select>
+      </div>
+    </div>
+    <div class="ff" style="margin-bottom:16px"><label>Motif du décalage</label><input type="text" id="decal-motif" placeholder="Raison du changement..."></div>
+    <button class="btn-adm" style="width:100%" onclick="confirmDecal()">Confirmer le décalage</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA =====
+let db = {
+  patients: [
+    {id:'P-00001',nom:'Dupont',prenom:'Marc',ddn:'1975-03-22',nss:'1 75 03 75 123 456 78',email:'marc.dupont@email.fr',tel:'06 12 34 56 78',adresse:'14 rue des Lilas, Amboise',medecin_traitant:'M-001',mdp:'dupont2025'},
+    {id:'P-00002',nom:'Martin',prenom:'Sophie',ddn:'1988-07-15',nss:'2 88 07 75 234 567 89',email:'sophie.martin@email.fr',tel:'07 23 45 67 89',adresse:'3 allée des Roses, Amboise',medecin_traitant:'M-002',mdp:'martin2025'},
+  ],
+  medecins: [
+    {id:'M-001',nom:'Dubois',prenom:'Jean',spec:'Médecine générale',email:'j.dubois@ch-amboise.fr',tel:'02 47 30 10 01',mdp:'dubois2025'},
+    {id:'M-002',nom:'Martin',prenom:'Claire',spec:'Cardiologie',email:'c.martin@ch-amboise.fr',tel:'02 47 30 10 02',mdp:'martin2025med'},
+    {id:'M-003',nom:'Leroy',prenom:'Pierre',spec:'Dermatologie',email:'p.leroy@ch-amboise.fr',tel:'02 47 30 10 03',mdp:'leroy2025'},
+  ],
+  consultations: [
+    {id:'C001',patientId:'P-00001',date:'2025-11-12',medecinId:'M-002',spec:'Cardiologie',notes:'Bilan cardiaque annuel. ECG normal. Pas d\'anomalie détectée. Renouvellement ordonnance statines.',montant:150,pctSS:70,statut:'Terminée'},
+    {id:'C002',patientId:'P-00001',date:'2025-08-03',medecinId:'M-001',spec:'Médecine générale',notes:'Consultation de routine. Tension 130/80. Légère fatigue. Bilan sanguin prescrit.',montant:55,pctSS:70,statut:'Terminée'},
+    {id:'C003',patientId:'P-00002',date:'2025-12-01',medecinId:'M-003',spec:'Dermatologie',notes:'Eczéma chronique. Prescription corticoïdes topiques.',montant:120,pctSS:70,statut:'Terminée'},
+  ],
+  factures: [
+    {id:'F-2025-001',patientId:'P-00001',date:'2025-11-12',prestation:'Consultation Cardiologie',montant:150,pctSS:70,statut:'Payée',rembEtape:3},
+    {id:'F-2025-002',patientId:'P-00001',date:'2025-08-03',prestation:'Consultation Médecine générale',montant:55,pctSS:70,statut:'En attente',rembEtape:1},
+    {id:'F-2025-003',patientId:'P-00002',date:'2025-12-01',prestation:'Consultation Dermatologie',montant:120,pctSS:70,statut:'Payée',rembEtape:2},
+  ],
+  rdv: [
+    {id:'RDV001',patientId:'P-00001',medecinId:'M-002',date:'2026-03-12',heure:'10h30',motif:'Suivi cardiologique',statut:'Confirmé'},
+    {id:'RDV002',patientId:'P-00002',medecinId:'M-003',date:'2026-04-05',heure:'14h00',motif:'Bilan dermatologique',statut:'En attente'},
+  ],
+  modifRequests: [],
+  samuAlerts: [],
+};
+
+// Étapes remboursement SS
+const REMB_ETAPES = [
+  {n:1,label:'Dossier reçu'},
+  {n:2,label:'En cours de traitement'},
+  {n:3,label:'Remboursé'},
+];
+
+let currentUser=null,currentUserType=null,selectedSlot=null;
+let ptCounter=2,medCounter=3,fabOpen=false;
+
+// ===== SCREENS =====
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('fab-wrap').style.display = id==='scr-admin'?'block':'none';
+  document.getElementById('urg-btn-wrap').style.display = (id==='scr-app'||id==='scr-medecin'||id==='scr-admin')?'block':'none';
+}
+
+// ===== AUTH =====
+function doLogin(){
+  const id=document.getElementById('li-user').value.trim();
+  const pw=document.getElementById('li-pass').value;
+  const pt=db.patients.find(p=>p.id===id&&p.mdp===pw);
+  if(!pt){document.getElementById('li-err').style.display='block';return;}
+  document.getElementById('li-err').style.display='none';
+  currentUser=pt;currentUserType='patient';
+  loadPatientApp();showScreen('scr-app');
+}
+function doAdminLogin(){
+  if(document.getElementById('adm-pass').value==='hospitalisation'){
+    document.getElementById('adm-err').style.display='none';
+    loadAdminPanel();showScreen('scr-admin');
+  } else {document.getElementById('adm-err').style.display='block';}
+}
+function doMedLogin(){
+  const id=document.getElementById('med-user').value.trim();
+  const pw=document.getElementById('med-pass').value;
+  const med=db.medecins.find(m=>m.id===id&&m.mdp===pw);
+  if(!med){document.getElementById('med-err').style.display='block';return;}
+  document.getElementById('med-err').style.display='none';
+  currentUser=med;currentUserType='medecin';
+  loadMedecinApp();showScreen('scr-medecin');
+}
+function logout(){currentUser=null;currentUserType=null;showScreen('scr-login');}
+
+// ===== PATIENT APP =====
+function loadPatientApp(){
+  const p=currentUser;
+  document.getElementById('pt-name').textContent=p.prenom+' '+p.nom;
+  document.getElementById('pt-avt').textContent=p.prenom[0]+p.nom[0];
+  document.getElementById('dash-greet').textContent='Bonjour, '+(p.nom==='Dupont'?'M.':'Mme')+' '+p.nom;
+
+  const myC=db.consultations.filter(c=>c.patientId===p.id);
+  const myF=db.factures.filter(f=>f.patientId===p.id);
+  const myR=db.rdv.filter(r=>r.patientId===p.id);
+
+  // Stats dash
+  document.getElementById('ds-consult').textContent=myC.filter(c=>c.statut==='Terminée').length;
+  document.getElementById('ds-fact').textContent=myF.filter(f=>f.statut==='En attente').length;
+  const rembPct=myF.length?Math.round(myF.filter(f=>f.rembEtape>=3).length/myF.length*100)+'%':'—';
+  document.getElementById('ds-remb').textContent=rembPct;
+
+  // Next RDV
+  const nextR=myR.filter(r=>r.statut==='Confirmé'&&r.date>=new Date().toISOString().split('T')[0]).sort((a,b)=>a.date.localeCompare(b.date))[0];
+  if(nextR){
+    const med=db.medecins.find(m=>m.id===nextR.medecinId);
+    document.getElementById('dash-next-rdv').textContent=(med?'Dr. '+med.nom+' — '+med.spec:'Médecin')+ ' — '+formatDate(nextR.date)+' à '+nextR.heure;
+  } else {document.getElementById('dash-next-rdv').textContent='Aucun rendez-vous à venir';}
+
+  // Timeline
+  const tl=document.getElementById('ds-timeline');tl.innerHTML='';
+  const items=[...myC.slice(-2),...myR.slice(-2)].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,4);
+  items.forEach(item=>{
+    const isRdv=!!item.heure;
+    const pend=item.statut!=='Terminée'&&item.statut!=='Annulé';
+    const med=db.medecins.find(m=>m.id===item.medecinId);
+    const medNom=med?'Dr. '+med.nom:'—';
+    tl.innerHTML+=`<div class="tl-item"><div class="tl-dot ${pend?'pend':''}"></div>
+      <div class="tl-date">${formatDate(item.date)}</div>
+      <div class="tl-title">${isRdv?'RDV — '+medNom:item.spec+' — '+medNom}</div>
+      <div class="tl-desc">${isRdv?item.motif:(item.notes||'').substring(0,80)+'...'}</div></div>`;
+  });
+
+  // Consult table
+  const ctb=document.getElementById('pt-consult-tb');ctb.innerHTML='';
+  myC.forEach(c=>{
+    const med=db.medecins.find(m=>m.id===c.medecinId);
+    ctb.innerHTML+=`<tr><td>${formatDate(c.date)}</td><td>${med?'Dr. '+med.nom:'—'}</td><td>${c.spec}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.notes.substring(0,45)}...</td>
+      <td><span class="badge ${c.statut==='Terminée'?'bg-green':'bg-gold'}">${c.statut}</span></td>
+      <td><button class="btn-sm" onclick="showConsultDetail('${c.id}')">Voir</button></td></tr>`;
+  });
+
+  // RDV patient
+  const rdvTb=document.getElementById('pt-rdv-tb');rdvTb.innerHTML='';
+  myR.forEach(r=>{
+    const med=db.medecins.find(m=>m.id===r.medecinId);
+    const badgeCls=r.statut==='Confirmé'?'bg-teal':r.statut==='Annulé'?'bg-red':r.statut==='Décalé'?'bg-navy':'bg-gold';
+    rdvTb.innerHTML+=`<tr><td>${formatDate(r.date)}</td><td>${r.heure}</td>
+      <td>${med?'Dr. '+med.nom+' ('+med.spec+')':'—'}</td><td>${r.motif}</td>
+      <td><span class="badge ${badgeCls}">${r.statut}</span></td></tr>`;
+  });
+
+  // Factures
+  const ftb=document.getElementById('pt-fact-tb');ftb.innerHTML='';
+  myF.forEach(f=>{
+    const remb=(f.montant*f.pctSS/100).toFixed(2);
+    const reste=(f.montant-f.montant*f.pctSS/100).toFixed(2);
+    ftb.innerHTML+=`<tr><td style="font-weight:600">${f.id}</td><td>${formatDate(f.date)}</td><td>${f.prestation}</td>
+      <td>${f.montant.toFixed(2)} €</td><td style="color:var(--teal)">${remb} €</td><td style="font-weight:600">${reste} €</td>
+      <td><span class="badge ${f.statut==='Payée'?'bg-green':'bg-gold'}">${f.statut}</span></td>
+      <td>${f.statut==='En attente'?`<button class="btn-sm-green" onclick="showToast('Paiement en ligne bientôt disponible','')">Payer</button>`:''}</td></tr>`;
+  });
+
+  // Remboursements
+  const rl=document.getElementById('remb-list');rl.innerHTML='';
+  if(!myF.length){rl.innerHTML='<p style="color:var(--gray);font-size:14px">Aucune facture enregistrée.</p>';return;}
+  myF.forEach(f=>{
+    const remb=(f.montant*f.pctSS/100).toFixed(2);
+    const step=f.rembEtape||1;
+    const doneLbl=step>=3?'bg-green':step>=2?'bg-gold':'bg-gray';
+    rl.innerHTML+=`<div class="remb-item">
+      <div class="remb-left"><h4>${f.prestation}</h4><p>${formatDate(f.date)}</p></div>
+      <div style="text-align:right"><div class="remb-amt">${remb} €</div><span class="badge ${doneLbl}">${REMB_ETAPES[step-1].label}</span></div>
+    </div>
+    <div class="ss-steps" style="margin-bottom:20px">
+      ${REMB_ETAPES.map(e=>`<div class="ss-step ${step>e.n?'done':step===e.n?'active':''}">
+        <div class="ss-dot">${step>e.n?'✓':e.n}</div>
+        <div class="ss-label">${e.label}</div>
+      </div>`).join('')}
+    </div>`;
+  });
+
+  // Profil
+  loadProfilPage();
+
+  // RDV selects
+  loadRdvMedecins();
+
+  // Modifications en attente
+  loadModifPending();
+}
+
+function loadProfilPage(){
+  const p=currentUser;
+  const med=db.medecins.find(m=>m.id===p.medecin_traitant);
+  document.getElementById('profil-card').innerHTML=`<div class="ctitle">Informations personnelles</div>
+    <div class="irow"><span class="ilbl">Nom complet</span><span class="ival">${p.prenom} ${p.nom}</span></div>
+    <div class="irow"><span class="ilbl">Date de naissance</span><span class="ival">${formatDate(p.ddn)}</span></div>
+    <div class="irow"><span class="ilbl">N° Sécurité Sociale</span><span class="ival">${p.nss}</span></div>
+    <div class="irow"><span class="ilbl">Email</span><span class="ival">${p.email}</span></div>
+    <div class="irow"><span class="ilbl">Téléphone</span><span class="ival">${p.tel}</span></div>
+    <div class="irow"><span class="ilbl">Adresse</span><span class="ival">${p.adresse||'—'}</span></div>
+    <div class="irow"><span class="ilbl">Médecin traitant</span><span class="ival">${med?'Dr. '+med.nom+' ('+med.spec+')':'—'}</span></div>
+    <div class="irow"><span class="ilbl">Identifiant</span><span class="ival"><strong>${p.id}</strong></span></div>`;
+}
+
+function loadModifPending(){
+  const pending=db.modifRequests.filter(r=>r.patientId===currentUser.id&&r.statut==='En attente');
+  const z=document.getElementById('modif-pending-zone');z.innerHTML='';
+  if(pending.length){
+    z.innerHTML='<div class="alert-warn"><strong>Demandes en attente :</strong><br>'+
+      pending.map(r=>`<div style="margin-top:4px">• <strong>${r.champ}</strong> → "${r.newVal}" — ${r.statut}</div>`).join('')+'</div>';
+  }
+}
+
+function demandeModif(){
+  const champ=document.getElementById('modif-champ').value;
+  const newVal=document.getElementById('modif-val').value.trim();
+  const just=document.getElementById('modif-just').value.trim();
+  if(!newVal){showToast('Veuillez saisir une nouvelle valeur','err');return;}
+  db.modifRequests.push({id:'MR'+Date.now(),patientId:currentUser.id,champ,newVal,just,statut:'En attente',date:new Date().toISOString().split('T')[0]});
+  document.getElementById('modif-val').value='';
+  document.getElementById('modif-just').value='';
+  showToast('Demande envoyée, en attente de validation','ok');
+  loadModifPending();
+  updateAdminNotifs();
+}
+
+function loadRdvMedecins(){
+  const specs=[...new Set(db.medecins.map(m=>m.spec))];
+  const specSel=document.getElementById('rdv-spec');
+  specSel.innerHTML='<option value="">Toutes spécialités</option>';
+  specs.forEach(s=>specSel.innerHTML+=`<option>${s}</option>`);
+  filterMedRdv();
+}
+
+function filterMedRdv(){
+  const spec=document.getElementById('rdv-spec').value;
+  const sel=document.getElementById('rdv-med');
+  sel.innerHTML='<option value="">Choisir un médecin</option>';
+  db.medecins.filter(m=>!spec||m.spec===spec).forEach(m=>{
+    sel.innerHTML+=`<option value="${m.id}">Dr. ${m.nom} — ${m.spec}</option>`;
+  });
+}
+
+function showSlots(){
+  const date=document.getElementById('rdv-date').value;
+  if(!date)return;
+  const card=document.getElementById('slots-card');card.style.display='block';
+  const grid=document.getElementById('slots-grid');
+  const all=['08h30','09h00','09h30','10h00','10h30','11h00','11h30','14h00','14h30','15h00','15h30','16h00'];
+  const medId=document.getElementById('rdv-med').value;
+  const taken=db.rdv.filter(r=>r.date===date&&(!medId||r.medecinId===medId)&&r.statut!=='Annulé').map(r=>r.heure);
+  grid.innerHTML='';selectedSlot=null;
+  document.getElementById('rdv-confirm').classList.remove('vis');
+  all.forEach(sl=>{
+    const t=taken.includes(sl);
+    const d=document.createElement('div');
+    d.className='slot'+(t?' taken':'');d.textContent=sl;
+    if(!t)d.onclick=()=>{
+      document.querySelectorAll('.slot').forEach(s=>s.classList.remove('selected'));
+      d.classList.add('selected');selectedSlot=sl;
+      const med=db.medecins.find(m=>m.id===medId);
+      document.getElementById('rdv-confirm-txt').textContent=(med?'Dr. '+med.nom:'')+' — '+formatDate(date)+' à '+sl;
+      document.getElementById('rdv-confirm').classList.add('vis');
+    };
+    grid.appendChild(d);
+  });
+}
+
+function confirmRdv(){
+  const date=document.getElementById('rdv-date').value;
+  const medId=document.getElementById('rdv-med').value;
+  const motif=document.getElementById('rdv-motif-txt').value||'Non précisé';
+  if(!date||!selectedSlot||!medId){showToast('Veuillez compléter tous les champs','err');return;}
+  db.rdv.push({id:'RDV'+Date.now(),patientId:currentUser.id,medecinId:medId,date,heure:selectedSlot,motif,statut:'En attente'});
+  showToast('Demande de RDV envoyée — en attente de confirmation','ok');
+  document.getElementById('slots-card').style.display='none';
+  document.getElementById('rdv-date').value='';
+  document.getElementById('rdv-motif-txt').value='';
+  loadPatientApp();updateAdminNotifs();
+}
+
+function showConsultDetail(cid){
+  const c=db.consultations.find(x=>x.id===cid);
+  const med=db.medecins.find(m=>m.id===c.medecinId);
+  document.getElementById('m-consult-content').innerHTML=`
+    <div class="irow"><span class="ilbl">Date</span><span class="ival">${formatDate(c.date)}</span></div>
+    <div class="irow"><span class="ilbl">Médecin</span><span class="ival">${med?'Dr. '+med.prenom+' '+med.nom:'—'}</span></div>
+    <div class="irow"><span class="ilbl">Spécialité</span><span class="ival">${c.spec}</span></div>
+    <div class="irow"><span class="ilbl">Statut</span><span class="ival"><span class="badge ${c.statut==='Terminée'?'bg-green':'bg-gold'}">${c.statut}</span></span></div>
+    <div style="margin:16px 0;background:var(--grayL);border-radius:10px;padding:14px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray);font-weight:600;margin-bottom:8px">Diagnostic & Notes</div>
+      <p style="font-size:14px;line-height:1.6;color:var(--navy)">${c.notes}</p>
+    </div>
+    <div style="display:flex;gap:12px">
+      <div style="flex:1;background:rgba(0,168,150,.08);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:11px;color:var(--gray);text-transform:uppercase">Montant</div>
+        <div style="font-size:18px;font-weight:700;color:var(--navy)">${c.montant} €</div>
+      </div>
+      <div style="flex:1;background:rgba(0,168,150,.08);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:11px;color:var(--gray);text-transform:uppercase">Part SS</div>
+        <div style="font-size:18px;font-weight:700;color:var(--teal)">${(c.montant*c.pctSS/100).toFixed(2)} €</div>
+      </div>
+      <div style="flex:1;background:rgba(0,168,150,.08);border-radius:10px;padding:12px;text-align:center">
+        <div style="font-size:11px;color:var(--gray);text-transform:uppercase">Reste</div>
+        <div style="font-size:18px;font-weight:700;color:var(--navy)">${(c.montant-c.montant*c.pctSS/100).toFixed(2)} €</div>
+      </div>
+    </div>`;
+  openM('m-consult');
+}
+
+function showPage(pgId,btn){
+  document.querySelectorAll('#scr-app .page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#scr-app .nitem').forEach(b=>b.classList.remove('active'));
+  document.getElementById(pgId).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+
+// ===== MÉDECIN APP =====
+function loadMedecinApp(){
+  const med=currentUser;
+  document.getElementById('med-display-name').textContent='Dr. '+med.prenom+' '+med.nom;
+  document.getElementById('med-avt').textContent=med.prenom[0]+med.nom[0];
+  document.getElementById('med-greet').textContent='Bonjour, Dr. '+med.nom;
+
+  const myRdv=db.rdv.filter(r=>r.medecinId===med.id);
+  const today=new Date().toISOString().split('T')[0];
+  const todayRdv=myRdv.filter(r=>r.date===today&&r.statut!=='Annulé');
+  const attente=myRdv.filter(r=>r.statut==='En attente');
+  const myPatients=[...new Set(db.consultations.filter(c=>c.medecinId===med.id).map(c=>c.patientId))];
+
+  document.getElementById('med-ds-rdv').textContent=todayRdv.length;
+  document.getElementById('med-ds-attente').textContent=attente.length;
+  document.getElementById('med-ds-patients').textContent=myPatients.length;
+
+  // Preview
+  const prev=document.getElementById('med-rdv-preview');prev.innerHTML='';
+  myRdv.filter(r=>r.date>=today&&r.statut!=='Annulé').sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5).forEach(r=>{
+    const pt=db.patients.find(p=>p.id===r.patientId);
+    const bc=r.statut==='Confirmé'?'bg-teal':'bg-gold';
+    prev.innerHTML+=`<tr><td style="font-weight:500">${pt?pt.prenom+' '+pt.nom:'—'}</td><td>${formatDate(r.date)}</td>
+      <td>${r.heure}</td><td>${r.motif}</td><td><span class="badge ${bc}">${r.statut}</span></td></tr>`;
+  });
+
+  // Full RDV
+  const full=document.getElementById('med-rdv-full');full.innerHTML='';
+  myRdv.forEach(r=>{
+    const pt=db.patients.find(p=>p.id===r.patientId);
+    const bc=r.statut==='Confirmé'?'bg-teal':r.statut==='Annulé'?'bg-red':r.statut==='Décalé'?'bg-navy':'bg-gold';
+    full.innerHTML+=`<tr><td style="font-weight:500">${pt?pt.prenom+' '+pt.nom:'—'}</td><td>${formatDate(r.date)}</td>
+      <td>${r.heure}</td><td>${r.motif}</td><td><span class="badge ${bc}">${r.statut}</span></td>
+      <td style="display:flex;gap:6px">
+        ${r.statut==='En attente'?`<button class="btn-sm-green" onclick="medConfirmRdv('${r.id}')">Confirmer</button>
+          <button class="btn-sm-red" onclick="medAnnulerRdv('${r.id}')">Annuler</button>`:''}
+      </td></tr>`;
+  });
+
+  // Patients
+  const ptb=document.getElementById('med-patients-tb');ptb.innerHTML='';
+  myPatients.forEach(pid=>{
+    const pt=db.patients.find(p=>p.id===pid);
+    if(!pt)return;
+    const lastC=db.consultations.filter(c=>c.patientId===pid&&c.medecinId===med.id).sort((a,b)=>b.date.localeCompare(a.date))[0];
+    ptb.innerHTML+=`<tr><td style="font-weight:600;color:var(--teal)">${pt.id}</td><td>${pt.nom}</td>
+      <td>${pt.prenom}</td><td>${formatDate(pt.ddn)}</td><td>${lastC?formatDate(lastC.date):'—'}</td></tr>`;
+  });
+}
+
+function medConfirmRdv(id){
+  const r=db.rdv.find(x=>x.id===id);
+  if(r){r.statut='Confirmé';showToast('RDV confirmé','ok');loadMedecinApp();}
+}
+function medAnnulerRdv(id){
+  const r=db.rdv.find(x=>x.id===id);
+  if(r){r.statut='Annulé';showToast('RDV annulé','');loadMedecinApp();}
+}
+
+function showMedPage(pgId,btn){
+  document.querySelectorAll('#scr-medecin .page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('#scr-medecin .nitem').forEach(b=>b.classList.remove('active'));
+  document.getElementById(pgId).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+
+// ===== ADMIN =====
+function loadAdminPanel(){
+  // Stats
+  document.getElementById('a-nb-pts').textContent=db.patients.length;
+  document.getElementById('a-nb-meds').textContent=db.medecins.length;
+  document.getElementById('a-nb-rdv').textContent=db.rdv.filter(r=>r.statut==='En attente').length;
+  document.getElementById('a-nb-imp').textContent=db.factures.filter(f=>f.statut==='En attente').length;
+
+  // RDV preview
+  const prev=document.getElementById('adm-rdv-preview');prev.innerHTML='';
+  db.rdv.slice(0,5).forEach(r=>{
+    const pt=db.patients.find(p=>p.id===r.patientId);
+    const med=db.medecins.find(m=>m.id===r.medecinId);
+    prev.innerHTML+=`<tr><td style="color:white">${pt?pt.prenom+' '+pt.nom:'—'}</td>
+      <td>${med?'Dr. '+med.nom:'—'}</td><td>${formatDate(r.date)}</td><td>${r.heure}</td>
+      <td><span class="badge ${r.statut==='Confirmé'?'bg-teal':'bg-gold'}">${r.statut}</span></td></tr>`;
+  });
+
+  // Patients
+  const ptb=document.getElementById('adm-pts-tb');ptb.innerHTML='';
+  db.patients.forEach(p=>{
+    ptb.innerHTML+=`<tr><td style="color:var(--gold);font-weight:600">${p.id}</td>
+      <td style="color:white">${p.nom}</td><td style="color:white">${p.prenom}</td>
+      <td>${p.nss}</td><td>${p.tel}</td>
+      <td><span style="font-size:11px;color:rgba(255,255,255,.35)">🔑 ${p.mdp}</span></td></tr>`;
+  });
+
+  // Médecins
+  refreshAdmMeds();
+
+  // RDV
+  refreshAdmRdv();
+
+  // Consultations
+  refreshAdmConsult();
+
+  // Factures
+  refreshAdmFact();
+
+  // Remboursements SS
+  refreshAdmRemb();
+
+  // Modifications
+  refreshAdmModifs();
+
+  // Popups selects
+  fillAdmSelects();
+
+  // Notifs
+  updateAdminNotifs();
+
+  // Patient ID préview
+  document.getElementById('np-id').value='P-'+String(ptCounter+1).padStart(5,'0');
+  document.getElementById('nm-id').value='M-'+String(medCounter+1).padStart(3,'0');
+}
+
+function fillAdmSelects(){
+  const ptOpts=db.patients.map(p=>`<option value="${p.id}">${p.prenom} ${p.nom} (${p.id})</option>`).join('');
+  const medOpts=db.medecins.map(m=>`<option value="${m.id}">Dr. ${m.nom} — ${m.spec}</option>`).join('');
+  ['rdv-pt-sel','c-pt','f-pt'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=ptOpts;});
+  ['rdv-med-sel'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=medOpts;});
+  const cMed=document.getElementById('c-med');
+  if(cMed){cMed.innerHTML=medOpts;cMed.onchange=()=>{const m=db.medecins.find(x=>x.id===cMed.value);if(m)document.getElementById('c-spec').value=m.spec;};}
+  const npMed=document.getElementById('np-med-trait');
+  if(npMed){npMed.innerHTML='<option value="">Aucun</option>'+medOpts;}
+}
+
+function refreshAdmMeds(){
+  const tb=document.getElementById('adm-meds-tb');tb.innerHTML='';
+  db.medecins.forEach(m=>{
+    tb.innerHTML+=`<tr><td style="color:var(--gold);font-weight:600">${m.id}</td>
+      <td style="color:white">Dr. ${m.prenom} ${m.nom}</td><td>${m.spec}</td>
+      <td>${m.email}</td><td style="font-size:11px;color:rgba(255,255,255,.35)">🔑 ${m.mdp}</td></tr>`;
+  });
+}
+
+function refreshAdmRdv(){
+  const tb=document.getElementById('adm-rdv-tb');tb.innerHTML='';
+  db.rdv.forEach(r=>{
+    const pt=db.patients.find(p=>p.id===r.patientId);
+    const med=db.medecins.find(m=>m.id===r.medecinId);
+    const bc=r.statut==='Confirmé'?'bg-teal':r.statut==='Annulé'?'bg-red':r.statut==='Décalé'?'bg-navy':'bg-gold';
+    tb.innerHTML+=`<tr><td style="color:white">${pt?pt.prenom+' '+pt.nom:'—'}</td>
+      <td>${med?'Dr. '+med.nom:'—'}</td><td>${formatDate(r.date)}</td><td>${r.heure}</td>
+      <td>${r.motif}</td><td><span class="badge ${bc}">${r.statut}</span></td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap">
+        ${r.statut!=='Confirmé'&&r.statut!=='Annulé'?`<button class="btn-sm-green" onclick="admConfirmerRdv('${r.id}')">Confirmer</button>`:''}
+        ${r.statut!=='Annulé'?`<button class="btn-sm-red" onclick="admAnnulerRdv('${r.id}')">Annuler</button>`:''}
+        ${r.statut!=='Annulé'?`<button class="btn-sm" onclick="openDecal('${r.id}')">Décaler</button>`:''}
+      </td></tr>`;
+  });
+}
+
+function refreshAdmConsult(){
+  const tb=document.getElementById('adm-consult-tb');tb.innerHTML='';
+  db.consultations.forEach(c=>{
+    const pt=db.patients.find(p=>p.id===c.patientId);
+    const med=db.medecins.find(m=>m.id===c.medecinId);
+    tb.innerHTML+=`<tr><td style="color:white">${pt?pt.prenom+' '+pt.nom:'—'}</td>
+      <td>${formatDate(c.date)}</td><td>${med?'Dr. '+med.nom:'—'}</td><td>${c.spec}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.notes.substring(0,50)}...</td>
+      <td style="color:var(--gold)">${c.montant} €</td></tr>`;
+  });
+}
+
+function refreshAdmFact(){
+  const tb=document.getElementById('adm-fact-tb');tb.innerHTML='';
+  db.factures.forEach(f=>{
+    const pt=db.patients.find(p=>p.id===f.patientId);
+    const remb=(f.montant*f.pctSS/100).toFixed(2);
+    const reste=(f.montant-f.montant*f.pctSS/100).toFixed(2);
+    tb.innerHTML+=`<tr><td style="color:var(--gold);font-weight:600">${f.id}</td>
+      <td style="color:white">${pt?pt.prenom+' '+pt.nom:'—'}</td>
+      <td>${formatDate(f.date)}</td><td>${f.prestation}</td>
+      <td>${f.montant} €</td><td style="color:var(--teal)">${remb} €</td><td>${reste} €</td>
+      <td><span class="badge ${f.statut==='Payée'?'bg-green':'bg-gold'}">${f.statut}</span></td>
+      <td>${f.statut==='En attente'?`<button onclick="admMarkPaid('${f.id}')" style="background:rgba(56,161,105,.15);border:1px solid rgba(56,161,105,.3);color:#68d391;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif">Marquer payée</button>`:''}</td></tr>`;
+  });
+}
+
+function refreshAdmRemb(){
+  const tb=document.getElementById('adm-remb-tb');tb.innerHTML='';
+  db.factures.forEach(f=>{
+    const pt=db.patients.find(p=>p.id===f.patientId);
+    const remb=(f.montant*f.pctSS/100).toFixed(2);
+    const step=f.rembEtape||1;
+    tb.innerHTML+=`<tr>
+      <td style="color:white">${pt?pt.prenom+' '+pt.nom:'—'}</td>
+      <td style="color:var(--gold);font-size:12px">${f.id}</td>
+      <td>${f.prestation}</td>
+      <td style="color:var(--teal)">${remb} €</td>
+      <td><span class="badge ${step>=3?'bg-green':step>=2?'bg-gold':'bg-gray'}">${REMB_ETAPES[step-1].label}</span></td>
+      <td>
+        <select onchange="updateRembStep('${f.id}',this.value)" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;color:white;font-family:'DM Sans',sans-serif;font-size:12px;outline:none">
+          ${REMB_ETAPES.map(e=>`<option value="${e.n}" ${step===e.n?'selected':''}>${e.label}</option>`).join('')}
+        </select>
+      </td></tr>`;
+  });
+}
+
+function refreshAdmModifs(){
+  const tb=document.getElementById('adm-modifs-tb');tb.innerHTML='';
+  if(!db.modifRequests.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,.3);padding:20px">Aucune demande en attente</td></tr>';return;}
+  db.modifRequests.forEach(r=>{
+    const pt=db.patients.find(p=>p.id===r.patientId);
+    const currentVal=pt?pt[r.champ]||'—':'—';
+    const bc=r.statut==='Validée'?'bg-green':r.statut==='Refusée'?'bg-red':'bg-gold';
+    tb.innerHTML+=`<tr>
+      <td style="color:white">${pt?pt.prenom+' '+pt.nom:'—'}</td>
+      <td style="color:var(--gold)">${r.champ}</td>
+      <td style="color:rgba(255,255,255,.5)">${currentVal}</td>
+      <td style="color:white">${r.newVal}</td>
+      <td style="color:rgba(255,255,255,.5);font-size:12px">${r.just||'—'}</td>
+      <td style="display:flex;gap:5px">
+        ${r.statut==='En attente'?`
+          <button class="btn-sm-green" onclick="validerModif('${r.id}')">Valider</button>
+          <button class="btn-sm-red" onclick="refuserModif('${r.id}')">Refuser</button>
+        `:`<span class="badge ${bc}">${r.statut}</span>`}
+      </td></tr>`;
+  });
+}
+
+function updateAdminNotifs(){
+  const pendingRdv=db.rdv.filter(r=>r.statut==='En attente').length;
+  const pendingModif=db.modifRequests.filter(r=>r.statut==='En attente').length;
+  const rdvDot=document.getElementById('rdv-notif-dot');
+  const modifDot=document.getElementById('modif-notif-dot');
+  if(rdvDot)rdvDot.style.display=pendingRdv?'inline-block':'none';
+  if(modifDot)modifDot.style.display=pendingModif?'inline-block':'none';
+}
+
+function admConfirmerRdv(id){
+  const r=db.rdv.find(x=>x.id===id);
+  if(r){r.statut='Confirmé';showToast('RDV confirmé','ok');refreshAdmRdv();updateAdminNotifs();loadAdminPanel();}
+}
+function admAnnulerRdv(id){
+  const r=db.rdv.find(x=>x.id===id);
+  if(r){r.statut='Annulé';showToast('RDV annulé','');refreshAdmRdv();updateAdminNotifs();loadAdminPanel();}
+}
+function openDecal(id){
+  document.getElementById('decal-rdv-id').value=id;
+  openM('m-decal');
+}
+function confirmDecal(){
+  const id=document.getElementById('decal-rdv-id').value;
+  const date=document.getElementById('decal-date').value;
+  const heure=document.getElementById('decal-heure').value;
+  if(!date){showToast('Veuillez choisir une date','err');return;}
+  const r=db.rdv.find(x=>x.id===id);
+  if(r){r.date=date;r.heure=heure;r.statut='Décalé';showToast('RDV décalé au '+formatDate(date),'ok');}
+  closeM('m-decal');refreshAdmRdv();
+}
+
+function admMarkPaid(id){
+  const f=db.factures.find(x=>x.id===id);
+  if(f){f.statut='Payée';showToast('Facture payée','ok');refreshAdmFact();loadAdminPanel();}
+}
+
+function updateRembStep(fid,step){
+  const f=db.factures.find(x=>x.id===fid);
+  if(f){f.rembEtape=parseInt(step);showToast('Étape de remboursement mise à jour','ok');refreshAdmRemb();}
+}
+
+function validerModif(rid){
+  const r=db.modifRequests.find(x=>x.id===rid);
+  if(!r)return;
+  const pt=db.patients.find(p=>p.id===r.patientId);
+  if(pt&&pt.hasOwnProperty(r.champ)){pt[r.champ]=r.newVal;}
+  r.statut='Validée';
+  showToast('Modification validée et appliquée','ok');
+  refreshAdmModifs();updateAdminNotifs();
+}
+function refuserModif(rid){
+  const r=db.modifRequests.find(x=>x.id===rid);
+  if(r){r.statut='Refusée';showToast('Modification refusée','');refreshAdmModifs();updateAdminNotifs();}
+}
+
+function createPatient(){
+  const nom=document.getElementById('np-nom').value.trim();
+  const prenom=document.getElementById('np-prenom').value.trim();
+  const ddn=document.getElementById('np-ddn').value;
+  const nss=document.getElementById('np-nss').value.trim();
+  const email=document.getElementById('np-email').value.trim();
+  const tel=document.getElementById('np-tel').value.trim();
+  const mdp=document.getElementById('np-mdp').value.trim();
+  const adresse=document.getElementById('np-adr').value.trim();
+  const medTrait=document.getElementById('np-med-trait').value;
+  if(!nom||!prenom||!mdp){showToast('Nom, prénom et mot de passe requis','err');return;}
+  ptCounter++;
+  const id='P-'+String(ptCounter).padStart(5,'0');
+  db.patients.push({id,nom,prenom,ddn,nss,email,tel,adresse,medecin_traitant:medTrait,mdp});
+  showToast('Compte patient créé : '+id,'ok');
+  loadAdminPanel();
+  ['np-nom','np-prenom','np-ddn','np-nss','np-email','np-tel','np-mdp','np-adr'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+}
+
+function createMedecin(){
+  const nom=document.getElementById('nm-nom').value.trim();
+  const prenom=document.getElementById('nm-prenom').value.trim();
+  const spec=document.getElementById('nm-spec').value.trim();
+  const email=document.getElementById('nm-email').value.trim();
+  const tel=document.getElementById('nm-tel').value.trim();
+  const mdp=document.getElementById('nm-mdp').value.trim();
+  if(!nom||!spec||!mdp){showToast('Nom, spécialité et mot de passe requis','err');return;}
+  medCounter++;
+  const id='M-'+String(medCounter).padStart(3,'0');
+  db.medecins.push({id,nom,prenom,spec,email,tel,mdp});
+  showToast('Médecin créé : '+id+' ('+prenom+' '+nom+')','ok');
+  loadAdminPanel();
+  ['nm-nom','nm-prenom','nm-spec','nm-email','nm-tel','nm-mdp'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+}
+
+function createRdvAdmin(){
+  const patientId=document.getElementById('rdv-pt-sel').value;
+  const medecinId=document.getElementById('rdv-med-sel').value;
+  const date=document.getElementById('rdv-date-adm').value;
+  const heure=document.getElementById('rdv-heure-adm').value;
+  const motif=document.getElementById('rdv-motif-adm').value.trim()||'Consultation';
+  if(!patientId||!medecinId||!date){showToast('Veuillez compléter tous les champs','err');return;}
+  db.rdv.push({id:'RDV'+Date.now(),patientId,medecinId,date,heure,motif,statut:'Confirmé'});
+  showToast('RDV créé et confirmé','ok');refreshAdmRdv();loadAdminPanel();
+  document.getElementById('rdv-date-adm').value='';
+  document.getElementById('rdv-motif-adm').value='';
+}
+
+function addConsultation(){
+  const patientId=document.getElementById('c-pt').value;
+  const date=document.getElementById('c-date').value;
+  const medecinId=document.getElementById('c-med').value;
+  const spec=document.getElementById('c-spec').value.trim();
+  const notes=document.getElementById('c-notes').value.trim()||'—';
+  const montant=parseFloat(document.getElementById('c-mnt').value)||0;
+  const pctSS=parseInt(document.getElementById('c-pct').value)||70;
+  if(!patientId||!date||!medecinId){showToast('Veuillez compléter tous les champs','err');return;}
+  const id='C'+String(db.consultations.length+1).padStart(3,'0');
+  const factId='F-'+new Date().getFullYear()+'-'+String(db.factures.length+1).padStart(3,'0');
+  db.consultations.push({id,patientId,date,medecinId,spec,notes,montant,pctSS,statut:'Terminée'});
+  db.factures.push({id:factId,patientId,date,prestation:'Consultation '+spec,montant,pctSS,statut:'En attente',rembEtape:1});
+  showToast('Consultation et facture enregistrées','ok');
+  refreshAdmConsult();refreshAdmFact();loadAdminPanel();
+  ['c-date','c-notes','c-mnt','c-pct'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+}
+
+function createFacture(){
+  const patientId=document.getElementById('f-pt').value;
+  const date=document.getElementById('f-date').value;
+  const prest=document.getElementById('f-prest').value.trim();
+  const montant=parseFloat(document.getElementById('f-mnt').value)||0;
+  const pctSS=parseInt(document.getElementById('f-pct').value)||70;
+  const statut=document.getElementById('f-stat').value;
+  if(!patientId||!date||!prest){showToast('Veuillez compléter tous les champs','err');return;}
+  const factId='F-'+new Date().getFullYear()+'-'+String(db.factures.length+1).padStart(3,'0');
+  db.factures.push({id:factId,patientId,date,prestation:prest,montant,pctSS,statut,rembEtape:1});
+  showToast('Facture créée : '+factId,'ok');refreshAdmFact();loadAdminPanel();
+  ['f-date','f-prest','f-mnt','f-pct'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
+}
+
+function showAdmPage(pgId,btn){
+  document.querySelectorAll('.adm-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.adm-nitem, .samu-sidebar-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(pgId).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(pgId==='ap-samu') renderSamuAlerts();
+}
+
+// ===== FAB =====
+function toggleFab(){
+  fabOpen=!fabOpen;
+  document.getElementById('fab-menu').classList.toggle('open',fabOpen);
+  document.getElementById('fab-btn').style.transform=fabOpen?'scale(1.08) rotate(45deg)':'';
+}
+function closeFab(){fabOpen=false;document.getElementById('fab-menu').classList.remove('open');document.getElementById('fab-btn').style.transform='';}
+
+// ===== URGENCE =====
+function openUrgence(){
+  document.getElementById('urg-type').value='';
+  document.getElementById('urg-desc').value='';
+  document.getElementById('urg-lieu').value='';
+  document.getElementById('urg-ville').value='';
+  openM('m-urg1');
+}
+
+function goUrgStep2(){
+  const type=document.getElementById('urg-type').value;
+  const desc=document.getElementById('urg-desc').value.trim();
+  const lieu=document.getElementById('urg-lieu').value.trim();
+  const ville=document.getElementById('urg-ville').value.trim();
+  if(!type){showToast('Veuillez sélectionner la situation d\'urgence','err');return;}
+  if(!lieu){showToast('Veuillez indiquer le lieu de l\'appel','err');return;}
+
+  let ptInfo='Non identifié';
+  if(currentUser&&currentUserType==='patient'){
+    ptInfo=`${currentUser.prenom} ${currentUser.nom} — ${currentUser.id}\nTél: ${currentUser.tel||'—'}`;
+  }
+
+  document.getElementById('urg-recap').innerHTML=`
+    <strong>🚨 Situation :</strong> ${type}<br>
+    ${desc?`<strong>📝 Détails :</strong> ${desc}<br>`:''}
+    <strong>📍 Lieu :</strong> ${lieu}${ville?` — ${ville}`:''}<br>
+    <strong>👤 Patient :</strong> ${ptInfo}`;
+
+  closeM('m-urg1');
+  openM('m-urg2');
+}
+
+async function confirmUrgence(){
+  const btn=document.getElementById('btn-urg-confirm');
+  btn.disabled=true;btn.textContent='Envoi en cours...';
+
+  const type=document.getElementById('urg-type').value;
+  const desc=document.getElementById('urg-desc').value.trim();
+  const lieu=document.getElementById('urg-lieu').value.trim();
+  const ville=document.getElementById('urg-ville').value.trim();
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  const heureStr=now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  let ptInfo='**Non identifié (anonyme)**';
+  if(currentUser&&currentUserType==='patient'){
+    ptInfo=`**${currentUser.prenom} ${currentUser.nom}**\nID : ${currentUser.id}\nN° SS : ${currentUser.nss||'—'}\nTél : ${currentUser.tel||'—'}`;
+  }
+
+  const payload={
+    username:"🚨 SAMU — Centre Hospitalier de Amboise",
+    embeds:[{
+      title:"🚨 APPEL D'URGENCE — SAMU 15",
+      description:`Alerte déclenchée depuis l'espace patient du **Centre Hospitalier de Amboise**`,
+      color:0xE74C3C,
+      fields:[
+        {name:"🚨 Situation",value:type,inline:false},
+        {name:"📝 Détails",value:desc||'Non précisé',inline:false},
+        {name:"📍 Lieu de l'appel",value:lieu+(ville?' — '+ville:''),inline:false},
+        {name:"👤 Patient",value:ptInfo,inline:false},
+        {name:"📅 Date & Heure",value:`${dateStr} à ${heureStr}`,inline:false},
+        {name:"🏥 Établissement",value:"Centre Hospitalier de Amboise",inline:false},
+        {name:"⚡ Action requise",value:"Contacter immédiatement le patient et envoyer les secours.",inline:false}
+      ],
+      footer:{text:"Centre Hospitalier de Amboise — Système d'alerte SAMU"},
+      timestamp:now.toISOString()
+    }]
+  };
+
+  try{
+    await fetch('https://discord.com/api/webhooks/1476916616682799156/nExtncw13t_u99p2hG_oN6ASnn7s2j0ga7kXhIobjtc_m1V-PpwgGRgBTXhi6v5_pn7P',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
+    });
+  }catch(e){}
+
+  // Save alert locally for admin panel
+  const alertObj = {
+    id: 'ALT'+Date.now(),
+    timestamp: now,
+    type,
+    desc: desc||'',
+    lieu,
+    ville: ville||'',
+    patient: currentUser&&currentUserType==='patient' ? {
+      nom: currentUser.prenom+' '+currentUser.nom,
+      id: currentUser.id,
+      nss: currentUser.nss||'—',
+      tel: currentUser.tel||'—',
+    } : null,
+    statut: 'En cours',
+    note: '',
+  };
+  db.samuAlerts.unshift(alertObj);
+  updateSamuNotif();
+
+  btn.disabled=false;btn.textContent='🚨 Déclencher l\'alerte SAMU';
+  closeM('m-urg2');openM('m-urg-sent');
+}
+
+// ===== SAMU ALERTS =====
+let samuFilter = 'all';
+
+function updateSamuNotif(){
+  const active = db.samuAlerts.filter(a=>a.statut==='En cours').length;
+  const el = document.getElementById('samu-notif-count');
+  if(el){ el.textContent=active; el.style.display=active?'inline-block':'none'; }
+}
+
+function renderSamuAlerts(){
+  const list = document.getElementById('samu-alerts-list');
+  if(!list) return;
+
+  let filtered = db.samuAlerts;
+  if(samuFilter==='active') filtered = db.samuAlerts.filter(a=>a.statut==='En cours');
+  if(samuFilter==='resolved') filtered = db.samuAlerts.filter(a=>a.statut==='Résolue');
+
+  // Update stats
+  document.getElementById('samu-total').textContent = db.samuAlerts.length;
+  document.getElementById('samu-actives').textContent = db.samuAlerts.filter(a=>a.statut==='En cours').length;
+  document.getElementById('samu-resolues').textContent = db.samuAlerts.filter(a=>a.statut==='Résolue').length;
+
+  if(!filtered.length){
+    list.innerHTML=`<div class="samu-empty"><div class="ico">${samuFilter==='resolved'?'✅':'🛡️'}</div><p>${samuFilter==='resolved'?'Aucune alerte résolue.':'Aucune alerte active.'}<br>${samuFilter==='all'?'Les alertes apparaîtront ici en temps réel dès qu\'un patient déclenchera le bouton d\'urgence.':''}</p></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(a=>{
+    const resolved = a.statut==='Résolue';
+    const ts = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp);
+    const timeStr = ts.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) + ' à ' + ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const ptBlock = a.patient
+      ? `<strong>${a.patient.nom}</strong> (${a.patient.id})<br>Tél : ${a.patient.tel}<br>N° SS : ${a.patient.nss}`
+      : '<em style="color:rgba(255,255,255,.35)">Anonyme / Non connecté</em>';
+
+    return `<div class="samu-alert-card ${resolved?'resolved':''}" id="alert-card-${a.id}">
+      <div class="samu-alert-top">
+        <div class="samu-alert-badge">
+          <div class="samu-pulse"></div>
+          <div class="samu-alert-type">${resolved?'✅ RÉSOLUE — ':'🚨 '} ${a.type}</div>
+        </div>
+        <div class="samu-alert-time">🕐 ${timeStr}</div>
+      </div>
+      <div class="samu-alert-grid">
+        <div class="samu-info-block">
+          <div class="samu-info-lbl">📍 Lieu de l'appel</div>
+          <div class="samu-info-val">${a.lieu}${a.ville?' — '+a.ville:''}</div>
+        </div>
+        <div class="samu-info-block">
+          <div class="samu-info-lbl">👤 Patient</div>
+          <div class="samu-info-val">${ptBlock}</div>
+        </div>
+        ${a.desc?`<div class="samu-info-block" style="grid-column:1/-1">
+          <div class="samu-info-lbl">📝 Détails</div>
+          <div class="samu-info-val">${a.desc}</div>
+        </div>`:''}
+      </div>
+      ${a.note&&resolved?`<div class="samu-resolved-note">📋 Note : ${a.note}</div>`:''}
+      <div class="samu-alert-actions">
+        ${!resolved?`<button class="btn-samu-resolve" onclick="resolveAlert('${a.id}')">✅ Marquer résolue</button>`:''}
+        <button class="btn-samu-note" onclick="toggleNoteZone('${a.id}')">📋 ${a.note?'Modifier note':'Ajouter une note'}</button>
+      </div>
+      <div class="samu-note-zone" id="note-zone-${a.id}">
+        <input type="text" id="note-inp-${a.id}" value="${a.note||''}" placeholder="Note d'intervention (unité envoyée, prise en charge...)">
+        <button class="btn-samu-resolve" onclick="saveNote('${a.id}')">Enregistrer la note</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterSamu(f){
+  samuFilter=f;
+  ['all','active','resolved'].forEach(k=>{
+    const btn=document.getElementById('samu-f-'+k);
+    if(!btn) return;
+    if(k===f){btn.style.background='rgba(231,76,60,.2)';btn.style.borderColor='rgba(231,76,60,.3)';btn.style.color='#fc8181';}
+    else{btn.style.background='rgba(255,255,255,.05)';btn.style.borderColor='rgba(255,255,255,.1)';btn.style.color='rgba(255,255,255,.5)';}
+  });
+  renderSamuAlerts();
+}
+
+function resolveAlert(id){
+  const a=db.samuAlerts.find(x=>x.id===id);
+  if(a){a.statut='Résolue';renderSamuAlerts();updateSamuNotif();showToast('Alerte marquée comme résolue','ok');}
+}
+
+function toggleNoteZone(id){
+  const z=document.getElementById('note-zone-'+id);
+  if(z)z.classList.toggle('open');
+}
+
+function saveNote(id){
+  const a=db.samuAlerts.find(x=>x.id===id);
+  const inp=document.getElementById('note-inp-'+id);
+  if(a&&inp){a.note=inp.value.trim();renderSamuAlerts();showToast('Note enregistrée','ok');}
+}
+
+function clearResolvedAlerts(){
+  db.samuAlerts=db.samuAlerts.filter(a=>a.statut!=='Résolue');
+  renderSamuAlerts();updateSamuNotif();showToast('Alertes résolues supprimées','');
+}
+
+// ===== MODALS =====
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+
+// close on overlay click
+document.querySelectorAll('.moverlay').forEach(el=>{
+  el.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+});
+
+// ===== UTILS =====
+function formatDate(d){
+  if(!d)return'—';
+  try{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});}catch{return d;}
+}
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+type;
+  setTimeout(()=>t.className='toast',3200);
+}
+
+// Enter keys
+document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('adm-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doAdminLogin();});
+document.getElementById('med-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doMedLogin();});
+</script>
+</body>
+</html>
